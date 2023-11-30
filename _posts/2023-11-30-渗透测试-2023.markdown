@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Hello 2023"
+title:      "主动信息收集"
 subtitle:   " \"记一次虚拟机渗透信息收集\""
 date:       2023-11-30 11:50:12
 author:     "yangsir"
@@ -31,7 +31,7 @@ db_nmap -sV ip
 
 
 
-![image-20231120214158786](C:\blog\img\image-20231120214158786.png)
+![image-20231120214158786](\img\image-20231120214158786.png)
 
 **利用arp_sweep收集主机信息**
 
