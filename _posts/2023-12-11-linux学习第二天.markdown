@@ -78,7 +78,7 @@ useradd [选项] 用户名
 
 ### 用户初始配置文件
 
-![image-20231211225634404](img\springBoot\image-20231211225634404.png)
+![image-20231211225634404](\img\springBoot\image-20231211225634404.png)
 
 **新用户创建时，都是复制root用户/ect/skel下的文件作为初始配置文件**
 
