@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "linux学习(1)"
-subtitle:   " \"云原生\""
+title:      "linux-从这里开始-常用命令"
+subtitle:   " \"linux基础常用命令\""
 date:       2023-12-09 16:02:12
 author:     "yangsir"
 header-img: "img/bg-material.jpg"

@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "linux学习(2)"
-subtitle:   " \"文件账户与权限管理\""
+title:      "linux-文件账户与权限管理"
+subtitle:   " \"第二次学习\""
 date:       2023-12-11 22:22:12
 author:     "yangsir"
 header-img: "img/bg-material.jpg"

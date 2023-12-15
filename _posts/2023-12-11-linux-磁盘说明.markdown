@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "linux学习(三)"
+title:      "磁盘分区方式和文件系统类型"
 subtitle:   " \"硬盘介绍\""
 date:       2023-12-13 22:22:12
 author:     "yangsir"
