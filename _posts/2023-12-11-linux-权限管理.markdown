@@ -257,3 +257,5 @@ chown 属主:属组 文件
 ### umask
 
 查看umask值
+
+![image-20231215132338135](\img\springBoot\image-20231215132338135.png)
