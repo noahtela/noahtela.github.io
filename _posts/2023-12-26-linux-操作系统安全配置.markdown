@@ -41,7 +41,15 @@ chattr +a /etc/passwd /etc/shadow #给密码文件加a锁
 lsattr 
 ```
 
-加了a锁后不能创建新用户
+加了a锁后不能创建新用户，加了a锁，可以追加内容到文件中
+
+
+
+i锁
+
+```
+chattr +i /etc/passwd /etc/shadow #给密码文件加a锁
+```
 
 
 
