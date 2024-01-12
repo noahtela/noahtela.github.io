@@ -1,6 +1,6 @@
 ---
   layout:     post
-title:      "linux软件-ssh"
+title:      "linux软件-SSH"
 subtitle:   " \"linux\""
 date:       2024-1-7 16:28:12
 author:     "yangsir"
@@ -19,7 +19,7 @@ tags:
 
 <p id = "build"></p>
 
-# linux软件-ssh
+# linux软件-SSH
 
 ## 一、ssh简介
 
