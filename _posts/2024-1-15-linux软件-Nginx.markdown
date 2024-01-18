@@ -21,6 +21,8 @@ tags:
 
 # linux软件-Nginx
 
+[TOC]
+
 
 
 ## 一、nginx简介
@@ -330,3 +332,285 @@ chkconfig nginx on      #把nginx添加开机自启动
 ![image-20240115171642716](\img\springBoot\image-20240115171642716.png)
 
 修改完成后重载nginx
+
+
+
+## 五、Nginx运行CPU亲和力
+
+
+
+在第四步中，只是设置了多进程，并没有真正榨干所有CPU
+
+### 1、4核4线程配置
+
+在/usr/local/nginx/conf/nginx.conf中全局配置中添加
+
+```shell
+  worker_cpu_affinity 0001 0010 0100 1000;
+```
+
+上面的配置表示：4核CPU，开启4个进程。0001表示开启第一个cpu内核， 0010表示开启第二个cpu内核，依次类推；有多少个核，就有几位数，1表示该内核开启，0表示该内核关闭。
+
+![5](\img\springBoot\image-20240117155439464.png)
+
+(我这里是两核)
+
+
+
+#### 2、那么如果我是4线程的CPU，我只想跑两个进程呢？
+
+
+
+```shell
+worker_processes 2;
+worker_cpu_affinity 0101 1010;
+```
+
+表示第一个进程在第一个和第三个cpu上运行，第二个进程在第二个和第四个cpu上运行，两个进程分别在这两个组合上轮询！
+
+
+
+扩展：
+
+```
+2核CPU，开启2个进程
+worker_processes2;
+worker_cpu_affinity  01  10;
+2核CPU，开启4进程
+worker_processes 4;
+worker_cpu_affinity  01  10  01  10;
+2核CPU，开启8进程
+worker_processes8;
+worker_cpu_affinity  01 10 01 10 01 10 01 10;
+8核CPU，开启2进程
+worker_processes2;
+worker_cpu_affinity  10101010 01010101;
+```
+
+### 3、自动绑定
+
+在nginx1.9版本之后，可以支持自动绑定
+
+```shell
+ worker_cpu_affinity auto;
+```
+
+
+
+## 六、nginx最多可以打开的文件数
+
+
+
+### 1、设置nginx最大可打开文件数
+
+ 在nginx.conf文件全局配置中添加
+
+```
+worker_rlimit_nofile 102400;
+```
+
+ 当一个nginx进程打开的最多文件数目，理论值应该是最多打开文件数（ulimit -n）与nginx进程数相除，但是nginx分配请求并不是那么均匀，所以最好与`ulimit -n`的值保持一致。
+
+![image-20240118161559123](\img\springBoot\image-20240118161559123.png)
+
+### 2、修改系统可以打开的最大文件数
+
+修改linux的软硬限制文件`/etc/security/limits.conf`
+
+ 在文件尾部添加如下代码：
+
+```shell
+* soft nofile 655350
+* hard nofile 655350
+```
+
+![image-20240118162146782](\img\springBoot\image-20240118162146782.png)
+
+
+
+七、Nginx事件处理模型
+
+```shell
+# vim /usr/local/nginx/conf/nginx.conf
+events {
+    use epoll;
+    worker_connections  65535;   #单个进程允许客户端最大并发连接数
+}
+```
+
+添加`use epoll`  nginx采用epoll事件模型，处理效率高
+
+worker_connections是**单个worker进程允许客户端最大连接数**，这个数值一般根据服务器性能和内存来制定，实际最大值就是worker进程数乘以work_connections
+
+实际我们填入一个65535，足够了，这些都算并发值，一个网站的并发达到这么大的数量，也算一个大站了！
+
+## 八、http主体优化
+
+### 1、开启高效传输模式
+
+```shell
+ # vim /usr/local/nginx/conf/nginx.conf
+ http{
+ 	sendfile        on;
+     tcp_nopush     on; 
+ }
+```
+
+ **sendfile    on;**
+
+ 开启高效文件传输模式，sendfile指令指定nginx是否调用sendfile函数来输出文件，当nginx是一个静态文件服务器的时候，开启sendfile配置项能大大提高nginx的性能。
+
+ **tcp_nopush   on;**
+
+ 必须在sendfile开启模式才有效，防止网络阻塞，积极的减少网络报文段的数量（将响应头和响应体两部分一起发送，而不一个接一个的发送。）
+
+### 2、长连接超时时间
+
+主要目的是保护服务器资源，Cpu,内存，控制连接数，因为建立连接也是需要消耗资源的
+
+```shell
+# vim /usr/local/nginx/conf/nginx.conf
+keepalive_timeout  65
+```
+
+ 服务器将会在这个时间后关闭连接，长连接可以减少重建连接的开销，如果设置时间过长，用户又多，长时间保持连接会占用大量资源。
+
+### 3、限制文件上传大小
+
+```
+# vim /usr/local/nginx/conf/nginx.conf
+client_max_body_size 10m;  #在40行添加
+```
+
+### 4、location匹配
+
+#### 1）location匹配
+
+ Nginx的location通过指定模式来与客户端请求的URI相匹配，location可以把网站的不同部分,定位到不同的处理方式上，基本语法如下：
+
+ **location [=|~|~\*|^~] pattern {**
+
+ **……**
+
+ **}**  
+
+ **注：中括号中为修饰符，即指令模式。Pattern****为url****匹配模式**
+
+ = 表示做精确匹配，即要求请求的地址和匹配路径完全相同
+
+ ~：正则匹配，区分大小写
+
+ ~*：正则匹配”不区分大小写
+
+ 注：nginx支持正则匹配，波浪号（~）表示匹配路径是正则表达式，加上*变成~*后表示大小写不敏感
+
+^~：指令用于字符前缀匹配。
+
+
+
+##### A、精准匹配
+
+= 用于精确字符匹配（模式），不能使用正则，区分大小写。
+
+eg:
+
+（1）精准匹配,浏览器输入ip地址/text.html,定位到服务器/var/www/html/text.html文件
+
+ location = /text.html { 
+
+  root /var/www/html;  
+
+  index text.html;
+
+ }
+
+（2） 匹配命中的location，使用rewrite指令，用于转发。可以理解命中了就重定向到rewrite后面的url即可。
+
+ location = /demo {  
+
+   rewrite ^ http://google.com;
+
+ }
+
+##### B、正常匹配
+
+ 正常匹配的指令为空，即没有指定匹配指令的即为正常匹配。其形式类似 /XXX/YYY.ZZZ正常匹配中的url匹配模式可以使用正则，不区分大小写。
+
+ location /demo {  
+
+   rewrite ^ http://google.com;
+
+ }
+
+ 上述模式指的是匹配/demo的url，下面的都能匹配
+
+   http://192.168.33.10/demo
+
+   http://192.168.33.10/demo/
+
+   http://192.168.33.10/demo/aaa
+
+   http://192.168.33.10/demo/aaa/bbb
+
+   http://192.168.33.10/demo/AAA
+
+   http://192.168.33.10/demoaaa
+
+   http://192.168.33.10/demo.aaa
+
+ 正常匹配和前缀匹配的差别在于优先级。前缀的优先级高于正常匹配。
+
+
+
+##### c、全匹配
+
+ 全匹配与正常匹配一样，没有匹配指令，匹配的url模式仅一个斜杠/
+
+ location / {  
+
+   rewrite ^ http://google.com;
+
+ }
+
+ 匹配任何查询，因为所有请求都已 / 开头。但是正则表达式规则和一些较长的字符串将被优先查询匹配。
+
+## 九、日志切割优化
+
+
+
+创建日志切割脚本
+
+```shell
+# cd /usr/local/nginx/logs/
+# vim cut_nginx_log.sh
+
+#!/bin/bash
+date=$(date +%F -d -1day)
+cd /usr/local/nginx/logs
+if [ ! -d cut ] ; then
+        mkdir cut
+fi
+mv access.log cut/access_$(date +%F -d -1day).log
+mv error.log cut/error_$(date +%F -d -1day).log
+/usr/local/nginx/sbin/nginx -s reload
+tar -jcvf cut/$date.tar.bz2 cut/*
+rm -rf cut/access* && rm -rf cut/error*
+find -type f -mtime +10 | xargs rm -rf
+
+
+# 添加周期性计划任务
+# chmod +x cut_nginx_log.sh  添加可执行权限
+
+```
+
+
+
+
+
+## 十、目录文件访问限制
+
+## 十一、IP和301优化
+
+## 十二、防盗链
+
+## 十四、内部身份验证
