@@ -609,8 +609,293 @@ find -type f -mtime +10 | xargs rm -rf
 
 ## 十、目录文件访问限制
 
+
+
+ 主要用在禁止目录下指定文件被访问，当然也可以禁止所有文件被访问！一般什么情况下用？比如是有存储共享，这些文件本来都只是一些下载资源文件，那么这些资源文件就不允许被执行，如sh,py,pl,php等等
+
+####  禁止访问images下面的php程序文件
+
+ 注意:这段配置文件一定要放在下面配置的前面才可以生效。
+
+ 
+
+```
+    location ~* ^/upload/.*\.(php|php5)$
+
+​     {
+
+​     deny all;
+
+​     }
+
+ 
+
+​     location ~ .php$ {
+
+​     try_files $uri /404.html;
+
+​     fastcgi_pass 127.0.0.1:9000;
+
+​     fastcgi_index index.php;
+
+​     fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+​     include fastcgi_params;
+
+​     }
+```
+
+##### 修改配置文件
+
+```shell
+
+
+# vim /usr/local/nginx/conf/nginx.conf
+
+​     location ~ ^/images/.*\.(php|php5|sh|py|pl)$ {
+
+​       deny all;
+
+​     }
+```
+
+#### 对目录进行访问限制
+
+##### 创建2个目录
+
+```
+mkdir -p /usr/local/nginx/html/{aa,bb}
+```
+
+
+
+##### 创建测试文件
+
+```
+echo 'aa' > /usr/local/nginx/html/aa/index.html
+
+echo 'bb' > /usr/local/nginx/html/bb/index.html
+```
+
+
+
+##### 配置目录拒绝访问
+
+```
+# vim /usr/local/nginx/conf/nginx.conf
+
+​     location /aa/    { return 404 ; }
+
+​     location /bb/    { return 403 ; }
+```
+
+
+
+##### 1.1.4、 重载nginx
+
+```shell
+ nginx -s reload
+```
+
 ## 十一、IP和301优化
+
+ 有时候，我们发现访问网站的时候，使用IP也是可以得，我们可以把这一层给屏蔽掉，让其直接反馈给403,也可以做跳转
+
+### 1、修改配置文件
+
+```
+vim /usr/local/nginx/conf/nginx.conf
+
+  server {
+
+​    listen 80;
+
+​    server_name www.benet.com benet.com;
+
+​     if ($host = 192.168.1.11) {
+
+​       rewrite ^ http://www.baidu.com;
+
+​     }
+
+​    }
+```
+
+### 2、403反馈的做法
+
+```
+# vim /usr/local/nginx/conf/nginx.conf
+
+server {
+
+​    listen 80;
+
+​    server_name www.benet.com benet.com;
+
+​    if ($host = 192.168.1.11) {
+
+​     return 403;
+
+​    }
+```
+
+### 3、配置301跳转
+
+```
+vim /usr/local/nginx/conf/nginx.conf
+
+server {
+
+  listen    80;
+
+  root     html;
+
+  server_name www.qingniao.com qingniao.com;
+
+  if ($host = qingniao.com ) {
+
+​    rewrite ^/(.*)$ http://www.qingniao.com/$1 permanent;
+
+  }
+```
+
+
 
 ## 十二、防盗链
 
+
+
+ 防止别人直接从你网站引用图片等链接，消耗了你的资源和网络流量，那么我们的解决办法由几种：
+
+   1：水印，品牌宣传，你的带宽，服务器足够
+
+   2：防火墙，直接控制，前提是你知道IP来源
+
+   3：防盗链策略
+
+### 1、  直接给予404的错误提示
+
+```shell
+
+
+# vim /usr/local/nginx/conf/nginx.conf
+
+​    location / {
+
+​      root  html;
+
+​      index index.html index.htm;
+
+​    } #直接在第一个localtion下面填写以下内容
+
+​     location ~* \.(jpg|gif|swf|flv|wma|wmv|asf|mp3|mmf|zip|rar)$ {
+
+​        root html;
+
+​        valid_referers none blocked \*.qingniao.com qingniao.com;
+
+​        if ($invalid_referer) {
+
+​            return 404;
+
+​        }
+
+​        expires   365d;
+
+​    }
+```
+
+```
+#### 1.1、   设置图片，来做rewrite跳转
+
+
+
+# vim /usr/local/nginx/conf/nginx.conf
+
+location ~* \.(jpg|gif|swf|flv|wma|wmv|asf|mp3|mmf|zip|rar)$ {
+
+​    root html;
+
+​    valid_referers none blocked *.qingniao.com qingniao.com;
+
+​        if ($invalid_referer) {
+
+​         rewrite ^/ http://www.qingniao.com/img/test.png;
+
+​         #return 302 http://www.qingniao.com/img/test.png;
+
+​        }
+
+​        expires   365d;
+
+}
+```
+
+ **location** ~* **\.**(**jpg**|**gif**|**png**|**swf**|**flv**|**wma**|**wmv**|**asf**|**mp3**|**mmf**|**zip**|**rar**)$ { #需要防盗的资源
+
+ **valid_referers** **none** **blocked** *.**qingniao.com** **qingniao.com**; #**这是可以盗链的域名或IP****地址，一般情况可以把google，baidu，sogou，soso，bing，feedsky等域名放进来
+
+ **none** **意思是不存在的Referer头(表示空的，也就是直接访问，比如直接在浏览器打开一个图片)**
+
+ **blocked** **意为根据防火墙伪装Referer头，如：“Referer: XXXXXXX”。**
+
+ **server_names** **为一个或多个服务器的列表，0.5.33版本以后可以在名称中使用“\*”通配符。**
+
 ## 十四、内部身份验证
+
+### 1、   配置认证
+
+```
+ [root@cong11 ~]# vim /usr/local/nginx/conf/nginx.conf
+
+​     location /bbs/ {
+
+​        auth_basic "haha";
+
+​        auth_basic_user_file /usr/local/nginx/conf/passwd;
+
+​    }
+
+ 
+
+autoindex实例：
+
+​    location /upload/ {
+
+​      autoindex on;
+
+​      \#index index.php
+
+​      auth_basic "这是一个身份认证测试站点";
+
+​      auth_basic_user_file /usr/local/nginx/conf/passwd;
+
+​     }
+```
+
+### 2、用户创建
+
+ 
+
+```shell
+yum -y install httpd-tools #安装htpasswd工具
+
+htpasswd -cb /usr/local/nginx/conf/passwd aaa 123
+
+Adding password for user aaa
+
+-c 创建passwdfile.如果passwdfile 已经存在,那么它会重新写入并删去原有内容.
+
+-b 命令行中一并输入用户名和密码而不是根据提示输入密码，可以看见明文，不需要交互
+
+chmod 400 /usr/local/nginx/conf/passwd 
+
+chown www /usr/local/nginx/conf/passwd
+
+```
+
+### 3、创建目录
+
+```shell
+mkdir /usr/local/nginx/html/bbs
+```
