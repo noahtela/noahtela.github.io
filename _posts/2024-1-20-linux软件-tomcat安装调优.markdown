@@ -5,7 +5,7 @@ title:      "linux软件-tomcat安装调优"
 subtitle:   " \"linux\""
 date:       2024-1-15 17:18:49
 author:     "yangsir"
-header-img: "img/post-bg-digital-native.jpg"
+header-img: "img/bg-material.jpg"
 catalog: true
 tags:
     - 笔记
