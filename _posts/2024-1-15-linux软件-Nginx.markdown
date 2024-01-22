@@ -1,5 +1,5 @@
 ---
-  layout:     post
+layout:     post
 title:      "linux软件-Nginx"
 subtitle:   " \"linux\""
 date:       2024-1-15 17:18:49
