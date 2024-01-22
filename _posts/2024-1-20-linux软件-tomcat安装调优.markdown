@@ -452,7 +452,7 @@ systemctl restart tomcat
 
 ### 1、创建测试数据
 
-```mysql
+```shell
  mysql -uroot -p123456
  mysql> create database tomcat;    #创建tomcat数据库
  mysql> use tomcat;
