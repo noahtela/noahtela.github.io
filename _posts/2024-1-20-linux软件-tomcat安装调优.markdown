@@ -462,25 +462,6 @@ systemctl restart tomcat
  mysql> flush privileges;  #刷新权限
 ```
 
-### 2、测试jsp链接mysql
-
-Jsp链接mysql，官方提供了工具： mysql-connector
-
-1)解压软件包
-
-```shell
-tar -zxvf mysql-connector-java-5.1.47.tar.gz -C /usr/local/src/
-cd /usr/local/src/mysql-connector-java-5.1.47/
-```
-
-2)复制jar文件到tomcat的lib目录下
-
-```shell
-cp mysql-connector-java-5.1.47-bin.jar /usr/local/tomcat/lib/
-```
-
-3)重启tomcat
-
 ### 3、建立测试页面
 
 ```shell
