@@ -484,7 +484,11 @@ cp mysql-connector-java-5.1.47-bin.jar /usr/local/tomcat/lib/
 
 
 
-### 3、建立测试页面
+```
+3、建立测试页面
+```
+
+
 
 ```
 # vim /usr/local/tomcat/webapps/ROOT/mysql.jsp
@@ -513,15 +517,19 @@ conn.close();
 </html>
 ```
 
+```
 
 
 ### 4、测试
 
  http://192.168.171.153:8080/mysql.jsp
+```
 
 ![a226bdb4f27c27eefea2035de392510](\img\springBoot\a226bdb4f27c27eefea2035de392510.png)
 
+```
 测试成功！！！！
+```
 
 
 
