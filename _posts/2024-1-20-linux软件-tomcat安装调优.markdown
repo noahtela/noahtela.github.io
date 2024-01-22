@@ -303,3 +303,419 @@ JAVA_OPTS='-Xms512m -Xmx1024m'
  -Xms：表示java虚拟机堆内存初始内存分配的大小，虚拟机在启动时向系统申请的内存的大小，-Xmx表示最大可分配给jvm的内存大小，根据自己需要修改。一般建议堆的最大值设置为可用内存的最大值的80%。
 
 ![1745d00f9466270a8a697fe9ffee7f2](\img\springBoot\1745d00f9466270a8a697fe9ffee7f2.png)
+
+## 三、搭建基于域名的虚拟主机
+
+```shell
+ ls /usr/local/tomcat/conf/
+```
+
+ ![image-20240120144152245](/img\springBoot\image-20240120144152245.png)
+
+server.xml是Tomcat的主配置文件（全局）,服务器设置的，例如端口设置，路径设置。
+
+
+
+### 1、修改server.xml配置文件
+
+```shell
+ vim /usr/local/tomcat/conf/server.xml
+```
+
+在末尾`</Engine>`上面添加内容
+
+```shell
+ <Host name="www.test.com"  appBase="/www/html">
+         <Context path="" docBase="/www/html/web1" />
+      </Host>
+      <Host name="map.test.com"  appBase="/www/html">
+         <Context path="" docBase="/www/html/web2" />
+      </Host>
+```
+
+(此处省略DNS解析过程)
+
+![image-20240120144346491](/img\springBoot\image-20240120144346491.png)
+
+参数说明：
+
+-  name指定虚拟主机的名称，那么使用对应的ip将无法访问，如果需要使用 ip 来访问，需要把 host 的name属性改成ip即可。
+-  appBase指定应用程序(网站)的根目录,这里可以存放多个程序(网站),一般是相对路径,相对于tomcat的安装目录。
+-  Context path=""为虚拟目录，如果是空，表示直接就是/，如果是如path="aa",那么访问的时候就是site:8080/aa
+-  docBase="……" 为实际目录，可以是绝对路径，如果是相对路径就是基于appBase
+
+
+
+### 2、创建测试网页
+
+```shell
+mkdir -p /www/html/{web1,web2}
+echo "web1" > /www/html/web1/index.html
+echo "web2" > /www/html/web2/index.html
+```
+
+再次提醒 此处省略DNS解析配置
+
+
+
+### 3、重启tomcat测试连接
+
+```shell
+systemctl restart tomcat
+```
+
+![b32ea8efd1b063f9580928729f4f583](/img\springBoot\b32ea8efd1b063f9580928729f4f583.png)
+
+![681764b52c8aef4b87e6843859bd296](/img\springBoot\681764b52c8aef4b87e6843859bd296.png)
+
+
+
+测试成功！！！
+
+
+
+## 四、安装tomcat-Native
+
+Tomcat 可以使用 apr 来提供更好的伸缩性、性能和集成到本地服务器技术。用来提高 tomcat 的性能。 tomcat native 在具体的运行平台上，提供了一种优化技术，它本身是基于 ARP（Apache Portable（轻便） Runtime）技术，我们应用了 tomcat native 技术之后，tomcat 在跟操作系统级别的交互方面可以做得更好，并且它更像apache 一样，可以更好地作为一台 web server。 tomcat 可以利用 apache 的 apr 接口，使用操作系统的部分本地操作，从而提升性能APR 提升的是静态页面处理能力.
+
+ **Tomcat8.5 在bin下已有tomcat-native.tar.gz，我们不需要去下载**
+
+
+
+### 一、安装依赖
+
+```shell
+yum install -y apr apr-devel gcc gcc-c++ openssl-devel openssl
+```
+
+#### 1、解压压缩包
+
+```shell
+cd /usr/local/tomcat/bin/
+tar zxf tomcat-native.tar.gz -C /usr/local/src/
+```
+
+#### 2、预编译
+
+```shell
+cd /usr/local/src/tomcat-native-1.2.21-src/native/
+
+./configure --with-apr=/usr/bin/apr-1-config --with-java-home=/usr/local/jdk1.8.0_171/ --with-ssl
+```
+
+#### 3、编译安装
+
+```shell
+make && make install
+```
+
+#### 4、添加库文件
+
+```shell
+vim /etc/ld.so.conf
+```
+
+#### 5、使配置文件生效
+
+```shell
+ ldconfig
+ 
+ echo "ldconfig" >>/etc/rc.local  #添加开机生效
+ 
+ chmod +x /etc/rc.d/rc.local
+ 
+  # 其实添加完ldconfig并无法立即引用类库变量，我们可以做软连接解决：
+  ln -s /usr/local/apr/lib/*  /usr/lib/
+```
+
+#### 6、重启tomcat
+
+```shell
+systemctl restart tomcat
+```
+
+
+
+#### 7、看日志是否支持native
+
+
+
+```shell
+ cat /usr/local/tomcat/logs/catalina.out | grep Native
+```
+
+![8e756dfef023090d63643671d15a48a](/img\springBoot\8e756dfef023090d63643671d15a48a.png)
+
+## 五、安装mysql
+
+省略安装过程（有脚本）
+
+### 1、创建测试数据
+
+```mysql
+ mysql -uroot -p123456
+ mysql> create database tomcat;    #创建tomcat数据库
+ mysql> use tomcat;
+ mysql> create table tt(id int,name varchar(128)); #创建tt测试表
+ mysql> insert into tt values (1,"come on boy"),(2,"come on girl");  #插入数据
+ mysql> grant all on tomcat.* to tomcat@'192.168.1.%' identified by 'tomcat'; #授权
+ mysql> flush privileges;  #刷新权限
+```
+
+### 2、测试jsp链接mysql
+
+Jsp链接mysql，官方提供了工具： mysql-connector
+
+1)解压软件包
+
+```shell
+tar -zxvf mysql-connector-java-5.1.47.tar.gz -C /usr/local/src/
+cd /usr/local/src/mysql-connector-java-5.1.47/
+```
+
+2)复制jar文件到tomcat的lib目录下
+
+```shell
+cp mysql-connector-java-5.1.47-bin.jar /usr/local/tomcat/lib/
+```
+
+3)重启tomcat
+
+### 3、建立测试页面
+
+```shell
+# vim /usr/local/tomcat/webapps/ROOT/mysql.jsp
+
+<%@ page contentType="text/html;charset=utf-8"%>
+<%@ page import="java.sql.*"%>
+<html>
+<body>
+<%
+Class.forName("org.gjt.mm.mysql.Driver").newInstance();
+String url ="jdbc:mysql://192.168.1.12/tomcat?user=tomcat&password=tomcat&useUnicode=true&characterEncoding=utf-8";
+Connection conn= DriverManager.getConnection(url);
+Statement stmt=conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_UPDATABLE);
+String sql="select * from tt";
+ResultSet rs=stmt.executeQuery(sql);
+while(rs.next()){%>
+step:<%=rs.getString(1)%>
+context:<%=rs.getString(2)%><br><br>
+<%}%>
+<%out.print("Congratulations!!! JSP connect MYSQL IS OK!!");%>
+<%rs.close();
+stmt.close();
+conn.close();
+%> 
+</body>
+</html>
+```
+
+### 4、测试
+
+ http://192.168.171.153:8080/mysql.jsp
+
+![a226bdb4f27c27eefea2035de392510](/img\springBoot\a226bdb4f27c27eefea2035de392510.png)
+
+测试成功！！！！
+
+
+
+## 六、Tomcat优化
+
+### 1、隐藏版本信息
+
+#### 1）隐藏HTTP头部的版本信息
+
+```shell
+ vim /usr/local/tomcat/conf/server.xml
+ #为Connector 添加 server 属性
+ <Connector port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" server="APP Srv1.0"/>
+```
+
+
+
+重启tomcat服务
+
+
+
+#### 2） 隐藏404页面出现的版本号
+
+修改前
+
+![image-20240120170342012](/img\springBoot\image-20240120170342012.png)
+
+
+
+ 针对该信息的显示是由一个jar包控制的，该jar包存放在 Tomcat 安装目录下的lib目录下，名称为 catalina.jar。
+
+ 我们可以通过 jar xf 或unzip命令解压这个 jar 包会得到两个目录 META-INF 和 org ,通过修改org/apache/catalina/util/ServerInfo.properties 文件中的 serverinfo 字段来实现来更改我们tomcat的版本信息。
+
+```shell
+cd /usr/local/tomcat/lib/
+
+#解压catalina.jar包
+unzip catalina.jar
+#修改ServerInfo.properties文件
+ #进入org/apache/catalina/util 编辑配置文件ServerInfo.properties
+cd org/apache/catalina/util
+vim ServerInfo.properties
+```
+
+![image-20240120170659702](/img\springBoot\image-20240120170659702.png)
+
+```shell
+# 将修改后的信息压缩回jar包
+cd /usr/local/tomcat/lib/
+jar uvf catalina.jar org/apache/catalina/util/ServerInfo.properties
+
+#删除解压目录
+rm -rf META-INF/  org/
+#重启tomcat
+systemctl restart tomcat
+
+```
+
+优化后：
+
+![image-20240120171122839](/img\springBoot\image-20240120171122839.png)
+
+
+
+### 2、开启NIO2
+
+
+
+ NIO是Java 1.4 及后续版本提供的一种新的I/O操作方式，是一个基于缓冲区、并能提供非阻塞I/O操作的Java API，利用java异步IO技术使Tomcat运行性能有所提升，可以通过少量的线程处理大量的请求。它拥有比传统I/O操作(BIO)更好的并发运行性能。tomcat 8版本及以上默认就是在NIO模式下允许。
+
+ Java NIO 可以让你非阻塞的使用IO，例如：当线程从通道读取数据到缓冲区时，线程还是可以进行其他事情。当数据被写入到缓冲区时，线程可以继续处理它。从缓冲区写入通道也类似。**Tomcat8在Linux系统中默认使用这种方式。**
+
+修改配置文件
+
+```shell
+# vim /usr/local/tomcat/conf/server.xml 
+
+改：
+     <Connector port="8080" protocol="HTTP/1.1"
+                connectionTimeout="20000"
+                redirectPort="8443" />
+为：
+     <Connector port="8080" protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+                connectionTimeout="20000"
+                redirectPort="8443" server="APP Srv1.0"/>
+
+```
+
+![image-20240120171744232](/img\springBoot\image-20240120171744232.png)
+
+
+
+### 3、Tomcat 执行器（线程池）的优化
+
+ Tomcat 默认是没有启用线程池的，在 Tomcat 中每一个用户请求都是一个线程，所以我们可以使用线程池来提高性能。
+
+ 使用线程池，用较少的线程处理较多的访问，可以提高tomcat处理请求的能力。
+
+```shell
+# 开启线程池
+# vim /usr/local/tomcat/conf/server.xml
+
+ <!--
+   <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+       maxThreads="150" minSpareThreads="4"/>
+    -->
+# 给这两行去掉注释，并修改为
+<Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+        maxThreads="900" minSpareThreads="100" maxSpareThreads="500"
+        prestartminSpareThreads="true" maxQueueSize="300" />
+
+```
+
+参数说明：
+
+- name：共享线程池的名字。这是 Connector 为了共享线程池要引用的名字，该名字必须唯一。
+
+- namePrefix:在 JVM 上，每个运行线程都可以有一个 name 字符串。这一属性为线程池中每个线程的 name 字符串设置了一个前缀，Tomcat 将把线程号追加到这一前缀的后面。
+
+- maxThreads：最大并发数，默认设置 200，一般建议在 500 ~1000，根据硬件设施和业务来判断
+- minSpareThreads：最小空闲线程数，Tomcat初始化时创建的线程数，默认设置25
+- maxSpareThreads：最大空闲线程数，一旦空闲线程超过这个值，Tomcat就会关闭不再需要的线程。
+- prestartminSpareThreads在Tomcat初始化的时候就初始化minSpareThreads 的参数值，如果不等于 true，
+- minSpareThreads的值就没啥效果了
+- maxQueueSize：最大的等待队列数，超过则拒绝请求
+
+```shell
+# 开启并使用线程池
+# 在connector中设置executor [ɪɡˈzekjətər]属性指向上面的执行器
+<Connector executor="tomcatThreadPool" port="8080" protocol="org.apache.coyote.http11.Http11AprProtocol"
+               connectionTimeout="20000"
+               redirectPort="8443" server="APP Srv1.0"/>
+
+```
+
+
+
+### 4、连接器（Connector）优化
+
+
+
+Connector是连接器，负责接收客户的请求，以及向客户端回送响应的消息。所以 Connector 的优化是重要部分。默认情况下Tomcat支持200线程访问，超过这个数量的连接将被等待甚至超时放弃，所以我们需要提高这方面的处理能力
+
+```shell
+<Connector executor="tomcatThreadPool" port="8080" protocol="org.apache.coyote.http11.Http11AprProtocol"
+               connectionTimeout="20000"
+               redirectPort="8443" server="APP Srv1.0"/>
+```
+
+
+
+拓展必要选项
+
+```shell
+<Connector executor="tomcatThreadPool" port="8080" 
+               protocol="org.apache.coyote.http11.Http11Nio2Protocol"
+               connectionTimeout="20000"
+               redirectPort="8443" server="APP Srv1.0"
+               maxThreads="1000"
+               minSpareThreads="100"
+               acceptCount="1000"
+               maxConnections="1000"
+               maxHttpHeaderSize="8192"
+               tcpNoDelay="true"
+               compression="on"
+               disableUploadTimeout="true"
+               enableLookups="false"
+               URIEncoding="UTF-8"/>
+```
+
+参数说明：
+
+- maxThreads:最大线程数。即最多同时处理的连接数，Tomcat使用线程来处理接收的每个请求。这个值表示Tomcat可创建的最大的线程数。如果没有指定，该属性被设置为200。如果使用了executor将忽略此连接器的该属性，连接器将使用executor。
+- minSpareThreads:最小空闲线程数。
+- acceptCount:接受最大队列长度，当队列满时收到的任何请求将被拒绝。
+- maxConnections:在任何给定的时间服务器接受并处理的最大连接数。
+- connectionTimeout：超时等待时间（毫秒）
+- maxHttpHeaderSize:请求头最大值
+- tcpNoDelay:如果为true，服务器socket会设置TCP_NO_DELAY选项，在大多数情况下可以提高性能。缺省情况下设为true
+- compression：是否开启压缩GZIP 。可接受的参数的值是“off ”（禁用压缩），“on ”（允许压缩，这会导致文本数据被压缩），“force ”（强制在所有的情况下压缩）。提示：压缩会增加Tomcat负担，最好采用Nginx + Tomcat 或者 Apache + Tomcat 方式，压缩交由Nginx/Apache 去做。
+- disableUploadTimeout：此标志允许servlet容器在数据上传时使用不同的连接超时，通常较长。如果没有指定，该属性被设置为true，禁用上传超时。
+- enableLookups：关闭DNS反向查询，DNS反查很耗时间
+
+### 5、禁用AJP连接器
+
+![image-20240120173002019](/img\springBoot\image-20240120173002019.png)
+
+
+
+ AJP端口用来与应用服务器交互时候用，比如apache连接tomcat等，由于 Tomcat 服务器相对于 Nginx 服务器在处理静态资源上效率较低。因此我们的网站服务器一般是 Nginx+Tomcat，Nginx 负责处理静态资源，因此 AJP 协议我们在使用 Nginx+Tomcat 架构时可以禁止掉。
+
+```shell
+# vim /usr/local/tomcat/conf/server.xml
+
+修改：
+   <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" />
+为：
+   <!-- <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" /> -->
+```
+
