@@ -446,61 +446,6 @@ systemctl restart tomcat
 
 ![8e756dfef023090d63643671d15a48a](/img\springBoot\8e756dfef023090d63643671d15a48a.png)
 
-## 五、安装mysql
-
-省略安装过程（有脚本）
-
-### 1、创建测试数据
-
-```shell
- mysql -uroot -p123456
- mysql> create database tomcat;    #创建tomcat数据库
- mysql> use tomcat;
- mysql> create table tt(id int,name varchar(128)); #创建tt测试表
- mysql> insert into tt values (1,"come on boy"),(2,"come on girl");  #插入数据
- mysql> grant all on tomcat.* to tomcat@'192.168.1.%' identified by 'tomcat'; #授权
- mysql> flush privileges;  #刷新权限
-```
-
-### 3、建立测试页面
-
-```shell
-# vim /usr/local/tomcat/webapps/ROOT/mysql.jsp
-
-<%@ page contentType="text/html;charset=utf-8"%>
-<%@ page import="java.sql.*"%>
-<html>
-<body>
-<%
-Class.forName("org.gjt.mm.mysql.Driver").newInstance();
-String url ="jdbc:mysql://192.168.1.12/tomcat?user=tomcat&password=tomcat&useUnicode=true&characterEncoding=utf-8";
-Connection conn= DriverManager.getConnection(url);
-Statement stmt=conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_UPDATABLE);
-String sql="select * from tt";
-ResultSet rs=stmt.executeQuery(sql);
-while(rs.next()){%>
-step:<%=rs.getString(1)%>
-context:<%=rs.getString(2)%><br><br>
-<%}%>
-<%out.print("Congratulations!!! JSP connect MYSQL IS OK!!");%>
-<%rs.close();
-stmt.close();
-conn.close();
-%> 
-</body>
-</html>
-```
-
-### 4、测试
-
- http://192.168.171.153:8080/mysql.jsp
-
-![a226bdb4f27c27eefea2035de392510](/img\springBoot\a226bdb4f27c27eefea2035de392510.png)
-
-测试成功！！！！
-
-
-
 ## 六、Tomcat优化
 
 ### 1、隐藏版本信息
