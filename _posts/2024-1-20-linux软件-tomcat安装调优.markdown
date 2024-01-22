@@ -208,3 +208,98 @@ WantedBy=multi-user.target
 systemctl daemon-reload  #重载service文件
 ```
 
+### 6、启动并测试访问
+
+```shell
+systemctl start tomcat
+```
+
+
+
+浏览器访问  http://192.168.171.155:8080/
+
+
+
+![2ae83ded68b71e22dc992ec7d86b3f8](/img\springBoot\2ae83ded68b71e22dc992ec7d86b3f8.png)
+
+
+
+### 7、点击Server Status
+
+![a55b87ce25a303fdb15ebc841d5d080](/img\springBoot\a55b87ce25a303fdb15ebc841d5d080.png)
+
+ 拒绝访问，因为这个页面需要我们配置一个账号密码，来访问。
+
+ 注：如果你需要查看 Tomcat 的运行状态可以配置tomcat管理员账户，然后登陆 Tomcat 后台进行查看。
+
+
+
+#### 1）修改tomcat-users.xml配置文件
+
+```
+vim /usr/local/tomcat/conf/tomcat-users.xml
+```
+
+在 `<tomcat-users>  </tomcat-users>`标签内添加
+
+```shell
+<role rolename="admin-gui"/>
+ <role rolename="admin-script"/>
+ <role rolename="manager-gui"/>
+ <role rolename="manager-script"/>
+ <role rolename="manager-jmx"/>
+ <role rolename="manager-status"/>
+ <user username="admin" password="123456" roles="manager-gui,manager-script,manager-jmx,manager-status,admin-script,admin-gui"/>
+```
+
+ **角色说明：**
+
+1：“manager-gui”：Allows access to the html interface（允许通过web的方式登录查看服务器信息）。
+
+2：“manager-script”: Allows access to the plain text interface（允许以纯文本的方式访问）。
+
+3：“manager-jmx”: Allows access to the JMX proxy interface（允许jmx的代理访问）。
+
+4：“manager-status”: Allows access to the read-only status pages（允许以只读状态访问）。
+
+5: admin-gui: 允许访问HTML GUI
+
+6 : admin-script: 允许访问文本接口
+
+
+
+#### 2)tomcat8以上还要增加以下配置
+
+```shell
+vim /usr/local/tomcat/conf/Catalina/localhost/manager.xml
+
+<Context privileged="true" antiResourceLocking="false"
+         docBase="${catalina.home}/webapps/manager">
+    <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="^.*$" />
+</Context>
+```
+
+```shell
+vim /usr/local/tomcat/webapps/host-manager/META-INF/context.xml
+#修改红框位置
+```
+
+![image-20240119163834293](/img\springBoot\image-20240119163834293.png)
+
+
+
+#### 3）重启tomcat，测试连接
+
+![16ae72d80982931c081cf558680c6d2](/img\springBoot\16ae72d80982931c081cf558680c6d2.png)
+
+**我们注意到当前配置的jvm大小非常小，那么接下来，调大jvm**
+
+```shell
+vim /usr/local/tomcat/bin/catalina.sh
+#在最前面（注释除外）添加
+JAVA_OPTS='-Xms512m -Xmx1024m'
+```
+
+ -Xms：表示java虚拟机堆内存初始内存分配的大小，虚拟机在启动时向系统申请的内存的大小，-Xmx表示最大可分配给jvm的内存大小，根据自己需要修改。一般建议堆的最大值设置为可用内存的最大值的80%。
+
+![1745d00f9466270a8a697fe9ffee7f2](\img\springBoot\1745d00f9466270a8a697fe9ffee7f2.png)
