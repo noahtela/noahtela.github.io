@@ -448,45 +448,7 @@ systemctl restart tomcat
 
 ## 五、安装mysql
 
-```
-省略安装过程（有脚本）
-
-### 1、创建测试数据
-
-
- mysql -uroot -p123456
- mysql> create database tomcat;    #创建tomcat数据库
- mysql> use tomcat;
- mysql> create table tt(id int,name varchar(128)); #创建tt测试表
- mysql> insert into tt values (1,"come on boy"),(2,"come on girl");  #插入数据
- mysql> grant all on tomcat.* to tomcat@'192.168.1.%' identified by 'tomcat'; #授权
- mysql> flush privileges;  #刷新权限
-
-
-### 2、测试jsp链接mysql
-
-Jsp链接mysql，官方提供了工具： mysql-connector
-
-1)解压软件包
-
-
-tar -zxvf mysql-connector-java-5.1.47.tar.gz -C /usr/local/src/
-cd /usr/local/src/mysql-connector-java-5.1.47/
-
-
-2)复制jar文件到tomcat的lib目录下
-
-cp mysql-connector-java-5.1.47-bin.jar /usr/local/tomcat/lib/
-
-
-3)重启tomcat
-```
-
-
-
-```
-3、建立测试页面
-```
+建立测试页面
 
 
 
@@ -517,19 +479,15 @@ conn.close();
 </html>
 ```
 
-```
 
 
-### 4、测试
+### 测试
 
  http://192.168.171.153:8080/mysql.jsp
-```
 
 ![a226bdb4f27c27eefea2035de392510](\img\springBoot\a226bdb4f27c27eefea2035de392510.png)
 
-```
 测试成功！！！！
-```
 
 
 
