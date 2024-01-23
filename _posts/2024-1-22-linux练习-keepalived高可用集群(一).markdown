@@ -1,9 +1,9 @@
 ---
 
 layout:     post
-title:      "linux练习-nginx和tomcat集群"
+title:      "linux练习-keepalived高可用集群(一)"
 subtitle:   " \"linux\""
-date:       2024-1-15 17:18:49
+date:       2024-1-23 17:25:49
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
