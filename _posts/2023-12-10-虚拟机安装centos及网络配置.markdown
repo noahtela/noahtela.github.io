@@ -1,0 +1,240 @@
+---
+layout:     post
+title:      "linux-虚拟机安装centos及网络配置"
+subtitle:   " \"linux\""
+date:       2023-12-09 16:02:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - linux学习
+    - 云原生
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# 虚拟机安装centos及网络配置
+
+
+
+## 一、安装VMware
+
+![image-20240126172324528](\img\springBoot\image-20240126172324528.png)
+
+虚拟机要跑在VMware上
+
+官方下载地址：https://www.vmware.com/（似乎需要激活码）
+
+
+
+![image-20240126172538638](\img\springBoot\image-20240126172538638.png)
+
+
+
+省略傻瓜式安装步骤，我这用到的是VMware 16pro
+
+## 二、下载centos镜像
+
+阿里云下载地址：https://mirrors.aliyun.com/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-Minimal-2009.iso
+
+163下载地址：https://mirrors.163.com/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-Minimal-2009.iso
+
+
+
+注意：这里下载的是centos7的最小安装版本，只有命令行，没有ui。如果需要ui，去链接的上一级目录中找找
+
+![image-20240126173809740](\img\springBoot\image-20240126173809740.png)
+
+下载完是这么一个文件
+
+
+
+## 三、虚拟机中运行centos7
+
+![image-20240126173953874](\img\springBoot\image-20240126173953874.png)
+
+![image-20240126174016572](\img\springBoot\image-20240126174016572.png)
+
+
+
+![image-20240126174128103](\img\springBoot\image-20240126174128103.png)
+
+
+
+![image-20240126174249743](\img\springBoot\image-20240126174249743.png)
+
+
+
+![image-20240126174406268](\img\springBoot\image-20240126174406268.png)
+
+
+
+![image-20240126174521986](\img\springBoot\image-20240126174521986.png)
+
+
+
+![image-20240126174552244](\img\springBoot\image-20240126174552244.png)
+
+
+
+![image-20240126174814808](\img\springBoot\image-20240126174814808.png)
+
+
+
+![image-20240126174924881](\img\springBoot\image-20240126174924881.png)
+
+
+
+然后点击完成
+
+![image-20240126175043716](\img\springBoot\image-20240126175043716.png)
+
+
+
+
+
+鼠标点击中间黑处，上箭头选择`install centos 7`等待程序跑完。
+
+![image-20240126175129704](\img\springBoot\image-20240126175129704.png)
+
+
+
+
+
+向下划，找到中文，简体中文，点击继续
+
+![image-20240126175841986](\img\springBoot\image-20240126175841986.png)
+
+
+
+稍等一会
+
+
+
+![image-20240126180021358](\img\springBoot\image-20240126180021358.png)
+
+
+
+点击安装位置
+
+![image-20240126180101357](\img\springBoot\image-20240126180101357.png)
+
+自动配置分区，完成，点击开始安装
+
+
+
+![image-20240126180204470](\img\springBoot\image-20240126180204470.png)
+
+等待安装的同时，设置root密码
+
+![image-20240126180259174](\img\springBoot\image-20240126180259174.png)
+
+密码过于简单的时候，需要点击**两下**完成才能退出
+
+等待安装完成
+
+![image-20240126180528570](\img\springBoot\image-20240126180528570.png)
+
+完成之后点击重启
+
+![image-20240126180620607](\img\springBoot\image-20240126180620607.png)
+
+登录系统，账号：root 密码是刚才自己设置的
+
+![image-20240126180831619](\img\springBoot\image-20240126180831619.png)
+
+
+
+登录成功
+
+至此，centos7已经安装成功
+
+
+
+## 三、网络配置
+
+![image-20240126181001812](\img\springBoot\image-20240126181001812.png)
+
+
+
+上面安装完之后，你会发现，根本就没有网，`ping`不同百度
+
+
+
+接下来配置网络
+
+![image-20240126181135542](\img\springBoot\image-20240126181135542.png)
+
+
+
+![image-20240126181505883](\img\springBoot\image-20240126181505883.png)
+
+
+
+然后
+
+```shell
+cd /etc/sysconfig/network-scripts
+```
+
+
+
+```shell
+ls #查看一下当前目录下的文件
+```
+
+![image-20240126181723591](\img\springBoot\image-20240126181723591.png)
+
+
+
+编辑配置文件，一般叫`ifcfg-ens33`
+
+```shell
+vi ifcfg-ens33
+```
+
+![image-20240126181859376](\img\springBoot\image-20240126181859376.png)
+
+```shell
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=static #静态IP 
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME=ens33
+UUID=367c5afe-8d03-4b56-8220-5c6d5fddcc43
+DEVICE=ens33
+ONBOOT=yes #开启网卡服务
+IPADDR="192.168.171.151" #指定本机ip
+NETMASK="255.255.255.0" #子网掩码
+GATEWAY="192.168.171.2" #网关
+DNS1="114.114.114.114" #DNS 这里跟我写一样的，上面三行写自己刚才记得
+```
+
+
+
+保存退出
+
+重启网卡
+
+```shell
+systemctl restart network
+```
+
+
+
+
+
+现在再`ping`百度
+
+![image-20240126182512372](\img\springBoot\image-20240126182512372.png)
+
+
+
+就可以正常上网啦
