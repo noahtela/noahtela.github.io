@@ -2,7 +2,7 @@
 layout:     post
 title:      "linux-shell编程基础"
 subtitle:   " \"linux\""
-date:       2024-2-27 17:22:49
+date:       2024-3-4 17:22:49
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
