@@ -1,9 +1,9 @@
 # Site settings
-title: Noah Blog
-SEOTitle: Noah的博客 | Noah Blog
+title: Xavier Blog
+SEOTitle: Xavier的博客 | Xavier Blog
 header-img: img/home-bg.jpg
 email: Noah074523@gmail.com
-description: "这里是 Noah的个人博客，与你一起发现更大的世界 | 要做一个有 swag 的程序员"
+description: "这里是 Xavier的个人博客，与你一起发现更大的世界 | 要做一个有 swag 的程序员"
 keyword: "博客, 个人网站, 互联网, Web, JavaScript, React, docker, 后端, Next.js"
 url: "https://blog.830sir.top" # your host, for absolute URL
 baseurl: "" # for example, '/blog' if your blog hosted on 'host/blog'
