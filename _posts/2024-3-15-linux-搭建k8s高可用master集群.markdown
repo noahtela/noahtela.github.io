@@ -2,7 +2,7 @@
 layout:     post
 title:      "linux-搭建k8s单点master集群"
 subtitle:   " \"linux\""
-date:       2024-2-29 17:22:49
+date:       2024-3-15 17:06:49
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
