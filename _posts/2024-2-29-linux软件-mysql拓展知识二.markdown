@@ -163,6 +163,7 @@ flush logs;
 
  mysql> select * from stu;
 
+```
  +-----+-------+
 
  | sid | NAME |
@@ -180,8 +181,8 @@ flush logs;
  | 121 | li121 |
 
  +-----+-------+
-
- 5 rows in set (0.00 sec)
+  5 rows in set (0.00 sec)
+```
 
  上面的模拟的误操作是删除了sid=104的记录
 
@@ -255,6 +256,7 @@ flush logs;
 
  mysql> select * from stu;
 
+```
  +-----+-------+
 
  | sid | NAME |
@@ -272,6 +274,7 @@ flush logs;
  +-----+-------+
 
  4 rows in set (0.00 sec)
+```
 
  接下来使用二进制日志继续恢复数据
 
@@ -305,6 +308,7 @@ mysqlbinlog --no-defaults --start-position=708 /usr/local/mysql/data/binlog.0000
 
  mysql> select * from stu;
 
+```
  +-----+-------+
 
  | sid | NAME |
@@ -326,6 +330,7 @@ mysqlbinlog --no-defaults --start-position=708 /usr/local/mysql/data/binlog.0000
  +-----+-------+
 
  6 rows in set (0.00 sec)
+```
 
  从上面显示可以看出数据恢复到正常状态。
 
