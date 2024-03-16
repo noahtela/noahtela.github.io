@@ -267,7 +267,27 @@ jps
 
 ## 一键安装脚本
 
+使用说明：
+
+```
+脚本适用于centos 7
+适用纯净环境中,脚本将会自动安装jdk和hadoop
+脚本运行中可自定义主机名
+
+把安装包和脚本上传至虚拟机/opt目录下
+jdk版本:jdk-8u171-linux-x64.tar.gz
+hadoop版本:hadoop-3.3.4.tar.gz
+使用root
+cd /opt
+运行脚本
+source hadoop_install.sh
+```
+
+
+
 ```shell
+#以下为shell脚本代码,复制下来命名为hadoop_install.sh
+
 #!/bin/bash
 
 # -------------------------------------------------
@@ -534,21 +554,5 @@ echo "集群初始化完成"
 echo "启动集群命令：start-all.sh"
 echo "关闭集群命令：stop-all.sh"
 echo "检查集群命令：jps"	
-```
-
-
-
-使用说明
-
-```
-脚本适用于centos 7
-
-把安装包和脚本上传至虚拟机/opt目录下
-jdk版本:jdk-8u171-linux-x64.tar.gz
-hadoop版本:hadoop-3.3.4.tar.gz
-使用root
-cd /opt
-运行脚本
-source hadoop_install.sh
 ```
 
