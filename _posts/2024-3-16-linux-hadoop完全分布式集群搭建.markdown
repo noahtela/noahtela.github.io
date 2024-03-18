@@ -73,7 +73,6 @@ echo -e "\033[31m   | | (_| | | | | (_| | \__ \ | |   \033[0m"
 echo -e "\033[31m   |_|\__,_|_| |_|\__, | |___/_|_|   \033[0m"
 echo -e "\033[31m                  |___/             \033[0m"
 sleep 2
-
 #检测/opt目录下是否有jdk的安装包
 jdk_files=$(find /opt -maxdepth 1 -name "*jdk*.tar.gz")
 
@@ -99,7 +98,12 @@ else
 fi
 tar -zxvf /opt/jdk-8u171-linux-x64.tar.gz -C /usr/local/ >&/dev/null
 ln -s /usr/local/jdk1.8.0_171 /usr/local/jdk
-
+setenforce 0
+iptables -F
+systemctl stop firewalld
+systemctl disable firewalld >&/dev/null
+systemctl stop NetworkManager
+systemctl disable NetworkManager >&/dev/null
 touch /opt/temp.txt
 echo 'JAVA_HOME=/usr/local/jdk' >>/opt/temp.txt
 echo 'PATH=$JAVA_HOME/bin:$PATH' >>/opt/temp.txt
@@ -351,7 +355,7 @@ cat >$temp_file <<EOL
 </property>
 <property>
 <name>dfs.namenode.secondary.http-address</name>
-<value>$node_one_ip:9868</value>
+<value>$node_one_name:9868</value>
 </property>
 EOL
 sudo sed -i "/<configuration>/r $temp_file" $file_path
@@ -422,6 +426,7 @@ EOL
 sudo sed -i "/<configuration>/r $temp_file" $file_path
 rm -f $temp_file
 
+> /usr/local/hadoop/etc/hadoop/workers
 echo "$node_one_name" >>/usr/local/hadoop/etc/hadoop/workers
 echo "$node_two_name" >>/usr/local/hadoop/etc/hadoop/workers
 
@@ -437,6 +442,10 @@ scp -r /etc/hosts root@$node_two_ip:/etc/hosts
 hdfs namenode -format
 
 echo -e "\033[31m 集群初始化成功 \033[0m"
+echo -e "\033[31m jdk安装目录：/usr/local/jdk \033[0m"
+echo -e "\033[31m hadoop安装目录：/usr/local/hadoop \033[0m"
+echo -e "\033[31m 请重启所有主机后继续\033[0m"
+echo -e "\033[31m 请重启所有主机后继续\033[0m"
 echo -e "\033[31m 请重启所有主机后继续\033[0m"
 echo -e "\033[31m 主节点启动:start-dfs.sh  start-yarn.sh \033[0m"
 ```
@@ -455,7 +464,7 @@ source hadoop.sh
 
 脚本执行完成后重启，在主节点使用`start-all.sh`命令，即可启动集群
 
-
+![image-20240318103757420](\img\springBoot\image-20240318103757420.png)
 
 ![image-20240316172148821](\img\springBoot\image-20240316172148821.png)
 
