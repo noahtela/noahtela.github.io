@@ -160,6 +160,44 @@ swapoff -a
 
 
 
+6、开启ipvs
+
+```
+#把ipvs.modules上传到master机器的/etc/sysconfig/modules/目录下
+[root@master]# chmod 755 /etc/sysconfig/modules/ipvs.modules && bash /etc/sysconfig/modules/ipvs.modules && lsmod | grep ip_vs
+ip_vs_ftp              13079  0 
+nf_nat                 26583  1 ip_vs_ftp
+ip_vs_sed              12519  0 
+ip_vs_nq               12516  0 
+ip_vs_sh               12688  0 
+ip_vs_dh               12688  0 
+
+
+#把ipvs.modules拷贝到node1的/etc/sysconfig/modules/目录下
+[root@master ~]# scp /etc/sysconfig/modules/ipvs.modules node1:/etc/sysconfig/modules/
+
+#把ipvs.modules拷贝到node2的/etc/sysconfig/modules/目录下
+[root@master ~]# scp /etc/sysconfig/modules/ipvs.modules node2:/etc/sysconfig/modules/
+
+[root@node1]# chmod 755 /etc/sysconfig/modules/ipvs.modules && bash /etc/sysconfig/modules/ipvs.modules && lsmod | grep ip_vs
+ip_vs_ftp              13079  0 
+nf_nat                 26583  1 ip_vs_ftp
+ip_vs_sed              12519  0 
+ip_vs_nq               12516  0 
+ip_vs_sh               12688  0 
+ip_vs_dh               12688  0 
+
+[root@node2]# chmod 755 /etc/sysconfig/modules/ipvs.modules && bash /etc/sysconfig/modules/ipvs.modules && lsmod | grep ip_vs
+ip_vs_ftp              13079  0 
+nf_nat                 26583  1 ip_vs_ftp
+ip_vs_sed              12519  0 
+ip_vs_nq               12516  0 
+ip_vs_sh               12688  0 
+ip_vs_dh               12688  0
+```
+
+
+
 ## 二、部署docker和containerd
 
 
