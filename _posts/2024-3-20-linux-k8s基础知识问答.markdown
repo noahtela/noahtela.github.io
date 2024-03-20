@@ -2,7 +2,7 @@
 layout:     post
 title:      "linux-k8s基础知识问答"
 subtitle:   " \"linux\""
-date:       2024-3-15 17:06:49
+date:       2024-3-20 10:51:49
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
