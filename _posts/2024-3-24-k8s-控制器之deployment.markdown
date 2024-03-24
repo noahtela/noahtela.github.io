@@ -139,3 +139,112 @@ Deployment 的生命周期包括以下阶段：
 
 
 
+例：
+
+简单的deployment使用
+
+```
+vim deploy-demo.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+      version: v1
+  template:
+    metadata:
+      labels:
+         app: myapp
+         version: v1
+    spec:
+      containers:
+      - name: myapp
+        image: janakiramm/myapp:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        startupProbe:
+           periodSeconds: 5
+           initialDelaySeconds: 20
+           timeoutSeconds: 10
+           httpGet:
+             scheme: HTTP
+             port: 80
+             path: /
+        livenessProbe:
+           periodSeconds: 5
+           initialDelaySeconds: 20
+           timeoutSeconds: 10
+           httpGet:
+             scheme: HTTP
+             port: 80
+             path: /
+        readinessProbe:
+           periodSeconds: 5
+           initialDelaySeconds: 20
+           timeoutSeconds: 10
+           httpGet:
+             scheme: HTTP
+             port: 80
+             path: /
+```
+
+
+
+deployment实现滚动升级
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-container
+        image: nginx
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+```
+
+**在上述示例中，Deployment 配置包括以下关键部分：** 
+
+**replicas 定义了需要运行的 Pod 副本数量。** 
+
+**selector 指定了用于选择 Pod 副本集的标签。** 
+
+**template 定义了 Pod 的模板，包括容器和其他配置。** 
+
+**strategy 指定了滚动更新的策略，类型为 RollingUpdate。** 
+
+**rollingUpdate 定义了滚动更新的具体参数，例如 maxUnavailable 表示更新期间允许的最大不可用**
+
+**Pod 数量，maxSurge 表示更新期间允许的最大额外副本数量。**
