@@ -1,0 +1,645 @@
+---
+layout:     post
+title:      "k8s-常见存储方案"
+subtitle:   " \"linux\""
+date:       2024-3-27 09:25:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+
+
+# k8s常见存储方案
+
+
+
+
+
+##  什么叫持久化存储？
+
+在Kubernetes(K8s)中,持久化存储是指将应用程序数据存储在集群外部存储系统中,即使Pod被重新调度到其他节点,数据也能被持久化存储并可用。这样可以确保数据的持久性和可移植性。
+
+持久化存储的主要意义如下:
+
+1. **数据持久性**:应用程序数据不会因为Pod的重启、迁移或节点故障而丢失,从而确保数据的持久性。
+2. **数据可移植性**:应用程序数据可以在不同的Pod实例之间共享和移植,从而实现无状态应用的可伸缩性和高可用性。
+3. **云原生存储**:Kubernetes支持多种云原生存储解决方案,如**NFS**、iSCSI、Ceph、GlusterFS等,可以方便地集成和使用这些存储系统。
+4. **存储抽象**:Kubernetes通过存储卷(Volume)和持久卷(PersistentVolume)等资源对象,为用户提供了存储的抽象层,简化了存储管理。
+5. **数据共享**:多个容器可以共享同一个存储卷,实现数据共享和协作。
+
+通过创建PersistentVolumeClaim(PVC)来请求持久化存储,并将其挂载到Pod中使用
+
+
+
+## 1、k8s持久化存储：emptyDir
+
+emptyDir 是 Kubernetes 中的持久化存储类型，它在 Pod 容器内提供临时存储。它在容器运行期间存在，并在容器终止时被删除。
+
+**特性：**
+
+- **短暂性：** 存储在 emptyDir 中的数据在 Pod 终止时丢失。
+- **本地性：** 数据仅在 Pod 运行所在的节点上可用。
+- **性能：** 由于数据存储在本地文件系统中，因此具有较高的读写性能。
+- **容量：** 容量由节点上的可用内存限制。
+
+emptyDir 通常用于存储以下类型的数据：
+
+- 临时缓存
+- 会话数据
+- 日志文件
+- 配置文件
+
+**配置：**
+
+在 Pod 规范中使用 `emptyDir` 卷来配置 emptyDir 存储：
+
+
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: my-container
+    image: my-image
+    volumeMounts:
+    - name: my-empty-dir
+      mountPath: /data
+  volumes:
+  - name: my-empty-dir
+    emptyDir: {}
+```
+
+
+
+**优点：**
+
+- **简单易用：** 不需要任何外部存储系统。
+- **性能高：** 由于数据存储在本地，因此具有较高的读写性能。
+- **短暂性：** 数据在 Pod 终止时自动删除，无需手动清理。
+
+**缺点：**
+
+- **数据丢失：** 数据在 Pod 终止时丢失，不适合存储持久数据。
+- **本地性：** 数据仅在 Pod 运行所在的节点上可用，不适合跨节点访问。
+- **容量限制：** 容量由节点上的可用内存限制。
+
+
+
+## 2、k8s持久化存储：HostPath
+
+HostPath 是 Kubernetes 中的持久化存储类型，它允许 Pod 容器直接访问节点的文件系统或目录。它将节点上的一个路径挂载到容器内，从而使容器可以访问该路径下的文件和目录。
+
+**特性：**
+
+- **本地性：** 数据存储在节点的文件系统中，并且仅在该节点上可用。
+- **高性能：** 由于数据存储在本地，因此具有较高的读写性能。
+- **持久性（可选）：** 如果 HostPath 路径是在节点上持久存储的，那么数据将是持久的。但是，如果 HostPath 路径是临时目录，那么数据将是短暂的。
+- **容量：** 容量由节点的文件系统容量限制。
+
+**用途：**
+
+HostPath 通常用于以下场景：
+
+- 访问节点上的日志文件或其他配置数据。
+- 在 Pod 之间共享数据，例如数据库文件或缓存。
+- 将数据从节点导入或导出到 Pod。
+
+**配置：**
+
+在 Pod 规范中使用 `hostPath` 卷来配置 HostPath 存储：
+
+
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+  - name: my-container
+    image: some-image
+    volumeMounts:
+    - mountPath: /container/path
+      name: my-volume
+  volumes:
+  - name: my-volume
+    hostPath:
+      path: /data/path/on/host
+      type: DirectoryOrCreate
+```
+
+说明：
+
+在 Kubernetes 中 `hostPath` 类型的卷支持的 `type` 字段允许指定宿主机上路径的类型，以便系统可以进行适当的操作。
+
+1. `DirectoryOrCreate`：如果宿主机上指定的路径不存在，则自动创建一个空目录。
+2. `FileOrCreate`：如果指定的路径不存在，则自动创建一个空文件。
+3. `Directory`：表示路径应是一个存在的目录，如果不存则会导致错误。
+4. `File`：表示路径应是一个存在的文件，如果不存则会导致错误。
+5. `Socket`：表示路径应是一个 Unix 套接字。
+6. `CharDevice`：表示路径应是一个字符设备。
+7. `BlockDevice`：表示路径应是一个块设备。
+
+
+
+**优点：**
+
+- **简单易用：** 无需任何外部存储系统。
+- **性能高：** 由于数据存储在本地，因此具有较高的读写性能。
+- **持久性（可选）：** 如果 HostPath 路径是持久存储的，那么数据将是持久的。
+
+**缺点：**
+
+- **数据丢失风险：** 如果节点发生故障，数据可能会丢失。
+- **本地性：** 数据仅在 Pod 运行所在的节点上可用，不适合跨节点访问。
+- **安全问题：** 容器可以访问节点上的任何文件或目录，这可能会带来安全风险。
+
+**注意事项：**
+
+- 确保 HostPath 路径对 Pod 容器具有适当的权限。
+- 避免将 HostPath 用于存储敏感数据或关键业务数据。
+- 考虑使用其他持久化存储类型（如持久卷）来存储持久数据。
+
+​    
+
+## 3、k8s持久化存储：NFS
+
+
+
+(1)搭建 nfs 服务
+
+```
+yum install nfs-utils -y
+```
+
+```
+mkdir /data/volumes -pv
+mkdir: 已创建目录 "/data"
+mkdir: 已创建目录 "/data/volumes"
+```
+
+```shell
+#配置 nfs 共享服务器上的/data/volumes 目录 
+systemctl start nfs
+systemctl enable nfs
+# vim /etc/exports
+/data/volumes *(rw,no_root_squash) 
+#no_root_squash: 用户具有根目录的完全管理访问权限
+```
+
+```shell
+#使 NFS 配置生效
+exportfs -arv
+```
+
+```shell
+#node1、node2 上也启动nfs 驱动
+
+systemctl start nfs
+systemctl enable nfs
+
+```
+
+
+
+```shell
+#手动挂载
+mkdir /test
+mount 192.168.171.151:/data/volumes /test/
+```
+
+(2)创建 Pod，挂载 NFS 共享出来的目录 
+
+
+
+```shell
+# vim nfs.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+ name: test-nfs-volume
+spec:
+ containers:
+ - name: test-nfs
+   image: nginx
+   imagePullPolicy: IfNotPresent
+   ports:
+   - containerPort: 80
+     protocol: TCP
+   volumeMounts:
+   - name: nfs-volumes
+     mountPath: /usr/share/nginx/html
+ volumes:
+ - name: nfs-volumes
+   nfs:
+    path: /data/volumes
+    server: 192.168.171.151
+```
+
+**优点**
+
+- **易于设置：** NFS 是一种成熟且广泛使用的协议，易于设置和配置。
+- **可扩展性：** NFS 服务器可以扩展以支持大量客户端和数据，使其适合于大规模部署。
+- **高性能：** NFS 可以提供高性能，尤其是当 NFS 服务器和客户端位于同一网络中时。
+
+**缺点**
+
+- **网络依赖性：** NFS 依赖于可靠的网络连接，这可能会成为一个瓶颈或单点故障。
+- **安全性：** NFS 本身不提供加密或其他安全功能，因此需要额外的安全措施。
+- **数据一致性：** NFS 不保证数据一致性，因为客户端可以缓存文件，从而导致数据损坏或丢失
+
+## 4、k8s 持久化存储： PVC
+
+
+
+**什么是持久化存储 (PV)**
+
+持久化存储 (PV) 是 Kubernetes 中的一种机制，用于为 Pod 提供持久存储容量。PV 由存储管理员或集群管理员创建，并提供一个抽象层，将 Pod 与底层存储系统隔离开来。
+
+**什么是持久化卷声明 (PVC)**
+
+持久化卷声明 (PVC) 是由 Pod 使用的资源请求，指定了 Pod 所需的存储类型、访问模式和所需容量。PVC 由应用程序开发人员创建，并与特定 PV 绑定。
+
+**PV（持久化卷）和 PVC（持久化卷声明）的关系**
+
+PV 和 PVC 之间是一对多的关系，一个 PV 可以被多个 PVC 绑定，而一个 PVC 只绑定到一个 PV。这种关系将 Pod 与底层存储系统隔离开来，并允许应用程序开发人员请求特定类型的存储。
+
+**PV（持久化卷）**
+
+- 由存储管理员或集群管理员创建。
+- 提供一个抽象层，将 Pod 与底层存储系统隔离开来。
+- 指定存储容量、访问模式和存储类型。
+
+**PVC（持久化卷声明）**
+
+- 由应用程序开发人员创建。
+- 指定 Pod 所需的存储类型、访问模式和所需容量。
+- 与特定 PV 绑定。
+
+**关系**
+
+- 一个 PVC 可以绑定到一个 PV，多个 PVC 可以绑定到同一个 PV。
+- 当 Pod 使用 PVC 时，它实际上使用的是与该 PVC 绑定的 PV。
+- PVC 提供了一种抽象层，允许应用程序开发人员请求存储，而无需了解底层存储系统的详细信息。
+
+**PVC 的优点**
+
+- **持久性：**PVC 提供持久存储，即使 Pod 终止或重新调度，数据仍会保留。
+- **抽象：**PVC 将 Pod 与底层存储系统隔离开来，简化了应用程序开发。
+- **动态供应：**PVC 允许动态供应存储，这意味着存储卷可以在需要时自动创建。
+- **多租户：**PVC 允许在同一集群中为不同的应用程序提供隔离的存储。
+
+**创建 PVC**
+
+
+
+(1)、底层还是使用nfs
+
+​	
+
+```shell
+#在宿主机创建 NFS 需要的共享目录
+mkdir /data/volume_test/v{1,2} -p
+```
+
+
+
+```shell
+#配置 nfs 共享宿主机上的/data/volume_test/v1..v2 目录 
+#vim /etc/exports
+/data/volume_test/v1 *(rw,no_root_squash)
+/data/volume_test/v2 *(rw,no_root_squash)
+```
+
+```shell
+#重新加载配置，使配置成效
+ exportfs -arv
+
+```
+
+(2)编写 pv 的资源清单文件
+
+```
+#查看定义 nfs 类型的 pv 需要的字段
+```
+
+![image-20240328152212518](\img\springBoot\image-20240328152212518.png)
+
+```
+#创建 pv 
+
+# vim pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name:  v1
+spec:
+  capacity:
+    storage: 1Gi  #pv的存储空间容量
+  accessModes: ["ReadWriteOnce"]
+  nfs:
+    path: /data/volume_test/v1 #把nfs的存储空间创建成pv
+    server: 192.168.171.151     #nfs服务器的地址
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name:  v2
+spec:
+  capacity:
+      storage: 2Gi
+  accessModes: ["ReadWriteMany"]
+  nfs:
+    path: /data/volume_test/v2
+    server: 192.168.171.151
+```
+
+`accessModes` 字段指定 Pod 可以如何访问持久化卷 (PV)。它可以接受以下值：
+
+- **ReadWriteOnce (RWO)**：允许单个节点以读写模式挂载卷。这是最常见的访问模式，适用于大多数应用程序。
+- **ReadOnlyMany (ROX)**：允许多个节点以只读模式挂载卷。这适用于需要共享数据的应用程序，例如数据库。
+- **ReadWriteMany (RWX)**：允许多个节点以读写模式挂载卷。这通常不推荐使用，因为并发写入可能会导致数据损坏。
+
+在创建持久化卷声明 (PVC) 时，可以指定所需的访问模式。如果未指定，则默认为 `ReadWriteOnce`。
+
+
+
+```
+#更新资源清单
+kubectl apply -f pv.yaml
+#查看 pv 资源
+kubectl get pv
+```
+
+![image-20240328153516319](\img\springBoot\image-20240328153516319.png)
+
+
+
+STATUS 是 Available，表示 pv 是可用的
+
+(3)、创建pvc
+
+```yaml
+#vim pvc.yaml 
+ 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 2Gi
+
+```
+
+![image-20240328153944133](\img\springBoot\image-20240328153944133.png)
+
+![image-20240328154012179](\img\springBoot\image-20240328154012179.png)
+
+
+
+(4)、创建 pod，挂载 pvc 
+
+```
+# vim pod_pvc.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-pvc
+spec:
+containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: nginx-html
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: nginx-html
+    persistentVolumeClaim:
+      claimName: my-pvc
+```
+
+更新资源清单文件
+
+kubectl apply -f pod_pvc.yaml
+
+
+
+## 5、 k8s 存储类：storageclass
+
+| 概念     | PersistentVolumeClaim (PVC)                                  | StorageClass                                                 |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 定义     | 用户对持久化存储的请求                                       | 存储供应策略模板                                             |
+| 功能     | - 定义存储需求规格（大小、访问模式等）<br> - 作为 Namespace 内部应用获取存储资源的方式<br> - 与 PersistentVolume 绑定以实现资源分配 | - 描述 PersistentVolumes 的特性集合<br> - 定义动态供应 PersistentVolumes 的策略和参数<br> - 控制回收策略（如回收后是否删除数据） |
+| 关系     | PVC 可引用 StorageClass                                      | StorageClass 为 PVC 动态供应 PV 时提供规则和模板             |
+| 使用场景 | 开发者声明式请求存储资源                                     | 管理员定义存储供应策略                                       |
+| 生命周期 | 根据应用生命周期动态创建和删除                               | 在集群整个生命周期内持续存在，直到被删除                     |
+| 相互影响 | PVC 创建触发 PV 分配流程                                     | StorageClass 规则决定如何响应 PVC 请求                       |
+| 动态供应 | 不具备动态供应能力                                           | 具备动态供应 PersistentVolumes 能力                          |
+
+
+
+```
+#安装 nfs provisioner，用于配合存储类动态生成 pv
+nfs-subdir-external-provisioner.tar.gz 上传到 node1、node2 上，手动解压
+docker load -i nfs-subdir-external-provisioner.tar.gz 
+```
+
+```yaml
+#创建运行 nfs-provisioner 需要的 sa 账号
+vim serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata
+  name: nfs-provisioner
+
+```
+
+什么是 sa？
+
+sa 的全称是 serviceaccount
+
+serviceaccount 是为了方便 Pod 里面的进程调用 Kubernetes API 或其他外部服务而设计的。 
+
+指定了 serviceaccount 之后，我们把 pod 创建出来了，我们在使用这个 pod 时，这个 pod 就有了 
+
+我们指定的账户的权限了。
+
+```shell
+#对 sa 授权
+kubectl create clusterrolebinding nfs-provisione-clusterrolebinding --clusterrole=cluster-admin --serviceaccount=default:nfs-provisioner
+```
+
+**常见的Kubernetes****用户角色和权限的划分：**
+
+**1. Cluster-admin**：
+
+**拥有对整个集群的完全访问权限，可以执行任意操作，包括创建、删除和修改任何资源。**
+
+**-** **权限：cluster-admin**
+
+**2. Namespace-admin**：
+
+**拥有对指定命名空间的完全访问权限，可以执行该命名空间内的任意操作。**
+
+**-** **权限：namespace-admin**、namespace-
+
+ 
+
+**3. Developer**：
+
+**拥有对指定命名空间的典型开发权限，可以创建、删除和修改该命名空间内的大部分资源，但无法修改命名空间级别的配置。**
+
+**-** **权限：create, delete, get, list, patch, update**、resource-
+
+ 
+
+**4. Viewer**
+
+**拥有对指定命名空间的只读权限，可以查看该命名空间内的资源，但无法进行任何修改操作。**
+
+**-** **权限：get, list**、resource-
+
+ 
+
+**5. Pod-creator**：
+
+**拥有对指定命名空间的创建Pod**的权限，但无法修改或删除Pod以外的其他资源。
+
+**-** **权限：create**、pods
+
+ 
+
+**6. Service-account**：
+
+**用于给服务账号赋予特定的权限，通常用于给自动化任务或容器应用程序提供访问Kubernetes API**的权限。
+
+权限：create, delete, get, list, patch, update、resource-
+
+```
+安装 nfs-provisioner 程序 
+mkdir /data/nfs_pro -p
+#把/data/nfs_pro 变成 nfs 共享的目录
+# vim /etc/exports
+/data/volumes *(rw,no_root_squash) 
+/data/volume_test/v1 *(rw,no_root_squash) 
+/data/volume_test/v2 *(rw,no_root_squash) 
+/data/nfs_pro *(rw,no_root_squash) 
+ exportfs -arv
+```
+
+```yaml
+#vim nfs-deployment.yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nfs-provisioner
+spec:
+  selector:
+    matchLabels:
+       app: nfs-provisioner
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nfs-provisioner
+    spec:
+      serviceAccount: nfs-provisioner
+      containers:
+        - name: nfs-provisioner
+          image: registry.cn-beijing.aliyuncs.com/mydlq/nfs-subdir-external-provisioner:v4.0.0
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: example.com/nfs
+            - name: NFS_SERVER
+              value: 192.168.171.151
+            - name: NFS_PATH
+              value: /data/nfs_pro
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: 192.168.171.151
+            path: /data/nfs_pro
+
+```
+
+```
+kubectl apply -f nfs-deployment.yaml
+```
+
+```yaml
+#创建 storageclass，动态供给 pv
+vim nfs-storageclass.yaml 
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: nfs
+provisioner: example.com/nfs
+
+```
+
+```
+kubectl apply -f claim.yaml
+```
+
+步骤总结： 
+
+1、供应商：创建一个 nfs provisioner 
+
+2、创建 storageclass，storageclass 指定刚才创建的供应商 
+
+3、创建 pvc，这个 pvc 指定 storageclass 
+
+
+
+```yaml
+#创建 pod，挂载 storageclass 动态生成的 pvc：test-claim1
+#vim read-pod.yaml 
+kind: Pod
+apiVersion: v1
+metadata:
+  name: read-pod
+spec:
+  containers:
+  - name: read-pod
+    image: nginx
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - name: nfs-pvc
+        mountPath: /usr/share/nginx/html
+  restartPolicy: "Never"
+  volumes:
+    - name: nfs-pvc
+      persistentVolumeClaim:
+        claimName: test-claim1
+
+```
+
+```
+kubectl apply -f read-pod.yaml
+```
+
