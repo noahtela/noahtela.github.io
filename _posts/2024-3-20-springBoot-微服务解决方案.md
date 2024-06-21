@@ -2,7 +2,7 @@
 layout:     post
 title:      "springBoot-微服务解决方案"
 subtitle:   " \"springBoot\""
-date:       2024-6-21 10:25:49
+date:       2024-3-20 10:25:49
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
@@ -31,7 +31,7 @@ tags:
 
 本教程适用于centos7，centos7安装教程及网络配置参照
 
-[centos7安装教程及网络配置]: https://blog.830sir.top/2023/12/09/%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AE%89%E8%A3%85centos%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/
+[linux-虚拟机安装centos及网络配置 - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2023/12/09/虚拟机安装centos及网络配置/)
 
 本教程涉及到的安装包、docker镜像、系统镜像：`https://www.123pan.com/s/gIBcVv-0iyN3.html`  提取码:Xbx5
 
@@ -190,7 +190,7 @@ OS name: "linux", version: "3.10.0-1160.108.1.el7.x86_64", arch: "amd64", family
 
 Docker安装请参照（**因为国内镜像源关闭，所以不用设置ustc的镜像，省略2.2**）：
 
-[centos7中安装docker]: https://blog.830sir.top/2024/02/17/linux%E8%BD%AF%E4%BB%B6-docker/
+[linux软件-docker - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2024/02/17/linux软件-docker/)
 
 ![2024-06-22 000444](\img\springBoot\2024-06-22 000444.png)
 
