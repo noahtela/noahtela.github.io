@@ -1,4 +1,5 @@
 ---
+
 layout:     post
 title:      "springBoot-微服务解决方案"
 subtitle:   " \"springBoot\""
@@ -33,7 +34,7 @@ tags:
 
 [linux-虚拟机安装centos及网络配置 - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2023/12/09/虚拟机安装centos及网络配置/)
 
-本教程涉及到的安装包、docker镜像、系统镜像：`https://www.123pan.com/s/gIBcVv-0iyN3.html`  提取码:Xbx5
+本教程涉及到的安装包、docker镜像、系统镜像：`https://www.123pan.com/s/gIBcVv-JzyN3.html`提取码:WD3G
 
 **2024年6月6日 起 Docker国内镜像源失效**
 
@@ -578,3 +579,351 @@ docker-compose up -d
 启动成功
 
 ![2024-06-22 001159](\img\springBoot\2024-06-22 001159.png)
+
+
+
+
+
+# 接下来进行搭建gogs+jenkins实现自动化部署
+
+## 一、删除mvn构建的镜像和docker-compose启动的容器
+
+### 1、删除容器
+
+```shell
+docker stop $(docker ps -aq)
+```
+
+```shell
+docker rm $(docker ps -aq)
+```
+
+### 2、删除镜像(别删多了)
+
+```shell
+[root@yms1 ~]# docker images
+REPOSITORY                                       TAG              IMAGE ID       CREATED         SIZE
+192.168.171.21:5000/microservice-userservice     0.0.1-SNAPSHOT   a6d1c347596d   14 hours ago    569MB
+192.168.171.21:5000/microservice-orderservice    0.0.1-SNAPSHOT   79b0e305efec   14 hours ago    570MB
+192.168.171.21:5000/microservice-gateway-zuul    0.0.1-SNAPSHOT   ce161d59eb84   14 hours ago    565MB
+192.168.171.21:5000/microservice-eureka-server   0.0.1-SNAPSHOT   0796ea3afa07   14 hours ago    566MB
+registry                                         latest           d6b2c32a0f14   8 months ago    25.4MB
+192.168.171.21:5000/java                         8-jre            b273004037cc   23 months ago   526MB
+192.168.222.100:5000/java                        8-jre            b273004037cc   23 months ago   526MB
+mysql                                            5.6              dd3b2a5dcb48   2 years ago     303MB
+```
+
+```shell
+#删除命令
+docker rmi [IMAGE ID]
+```
+
+```shell
+#剩下以下镜像
+[root@yms1 ~]# docker images
+REPOSITORY                  TAG       IMAGE ID       CREATED         SIZE
+registry                    latest    d6b2c32a0f14   8 months ago    25.4MB
+192.168.171.21:5000/java    8-jre     b273004037cc   23 months ago   526MB
+192.168.222.100:5000/java   8-jre     b273004037cc   23 months ago   526MB
+mysql                       5.6       dd3b2a5dcb48   2 years ago     303MB
+```
+
+### 3、重新启动私有仓库容器并上传java:jre-8
+
+```shell
+docker run -di --name=registry -p 5000:5000 registry
+```
+
+```shell
+docker push 192.168.171.21:5000/java:8-jre  #注意替换IP
+```
+
+
+
+
+
+## 二、搭建git服务器(yms2)
+
+**以为大多数同学访问不到GitHub，这里使用Gogs私有化部署替代GitHub**
+
+### 1、在第二台机器上上传gogs
+
+上传至/opt目录下
+
+```shell
+[root@yms2 opt]# ll
+总用量 98068
+drwx--x--x. 4 root root        28 6月  22 13:28 containerd
+-rw-r--r--. 1 root root 100420608 6月  22 13:52 gogs.tar
+```
+
+### 2、导入镜像
+
+```shell
+[root@yms2 opt]# docker load -i /opt/gogs.tar 
+f4111324080c: Loading layer [==================================================>]   7.35MB/7.35MB
+f07033ba396b: Loading layer [==================================================>]   25.7MB/25.7MB
+130e071c9d92: Loading layer [==================================================>]   2.56kB/2.56kB
+66f61b79df21: Loading layer [==================================================>]  2.048kB/2.048kB
+fe74d5fb5c7d: Loading layer [==================================================>]  39.94kB/39.94kB
+0b870346258a: Loading layer [==================================================>]  64.99MB/64.99MB
+8954213ede8a: Loading layer [==================================================>]  2.307MB/2.307MB
+Loaded image: gogs/gogs:latest
+```
+
+### 3、启动容器
+
+```shell
+# 创建并运行一个容器，将宿主机的10022端口映射到容器的22端口，将宿主机的13000端口映射到容器的3000端口，10022端口和13000端口可以根据自己的情况修改
+docker run -d -p 10022:22 -p 13000:3000 -v /var/gogs:/data gogs/gogs
+```
+
+### 4、浏览器访问ip:13000，进行初始化设置，比如我这里是`http://192.168.171.22:13000`
+
+#### a.gogs目前支持3种数据库：MySQL、PostgreSQL、SQLite3，**如果没有可用的数据库，可以选择SQLite3**，如果想安装Mysql，请参照[linux软件-mysql8.0 - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2024/01/26/linux软件-mysql8/)
+
+![2024-06-22 154950](\img\springBoot\2024-06-22 154950.png)
+
+这里使用SQLite3做演示
+
+![2024-06-22 155100](\img\springBoot\2024-06-22 155100.png)
+
+#### b、应用基本设置
+
+![2024-06-22 155153](\img\springBoot\2024-06-22 155153.png)
+
+#### c、管理员账号设置
+
+![2024-06-22 155214](\img\springBoot\2024-06-22 155214.png)
+
+#### d、立即安装
+
+![2024-06-22 155245](\img\springBoot\2024-06-22 155245.png)
+
+### 5、创建仓库上传代码
+
+![2024-06-22 155324](\img\springBoot\2024-06-22 155324.png)
+
+![2024-06-22 155355](\img\springBoot\2024-06-22 155355.png)
+
+
+
+![2024-06-22 155445](\img\springBoot\2024-06-22 155445.png)打开**代码文件夹**初始化本地仓库并上传代码（**windows上没安装Git的，请自行百度。。**)
+
+在该文件夹下打开git命令行
+
+![2024-06-22 155511](\img\springBoot\2024-06-22 155511.png)
+
+![2024-06-22 155543](\img\springBoot\2024-06-22 155543.png)
+
+**依次执行以下命令**（注意仓库地址）
+
+```shell
+git init
+git add .   #注意有个点
+git commit -m "first commit"
+git remote add origin http://192.168.171.22:13000/root/Mymallmanagement.git #注意替换ip
+git push -u origin master
+```
+
+![2024-06-22 155639](\img\springBoot\2024-06-22 155639.png)
+
+第一次提交代码可能需要验证密码，账号密码就是刚才创建的管理员账号密码
+
+![2024-06-22 155746](\img\springBoot\2024-06-22 155746.png)
+
+刷新浏览器
+
+![2024-06-22 155809](\img\springBoot\2024-06-22 155809.png)
+
+上传成功
+
+## 三、搭建jenkins(yms1)
+
+### 1、上传war包至/opt/jenkins目录下
+
+```shell
+mkdir /opt/jenkins
+cd /opt/jenkins
+```
+
+```shell
+[root@yms1 jenkins]# ll
+总用量 91216
+-rw-r--r--. 1 root root 93404074 6月  22 14:41 jenkins.war
+```
+
+```shell
+chmod +x /opt/jenkins/jenkins.war
+```
+
+
+
+### 2、启动jenkins
+
+下载字体库
+
+```
+yum install dejavu-sans-fonts
+yum install fontconfig
+fc-cache --force
+```
+
+```shell
+java -jar /opt/jenkins/jenkins.war --httpPort=9090
+```
+
+![2024-06-22 155846](\img\springBoot\2024-06-22 155846.png)
+
+### 3、浏览器访问
+
+http://192.168.171.21:9090/
+
+![2024-06-22 155920](\img\springBoot\2024-06-22 155920.png)
+
+
+
+![2024-06-22 155940](\img\springBoot\2024-06-22 155940.png)
+
+
+
+![2024-06-22 160020](\img\springBoot\2024-06-22 160020.png)
+
+
+
+**点击安装**
+
+![2024-06-22 160101](\img\springBoot\2024-06-22 160101.png)
+
+
+
+点击**保存并完成**
+
+![2024-06-22 160148](\img\springBoot\2024-06-22 160148.png)
+
+
+
+点击**现在不要**
+
+
+
+**安装插件**
+
+![2024-06-22 160228](\img\springBoot\2024-06-22 160228.png)
+
+![2024-06-22 160324](\img\springBoot\2024-06-22 160324.png)
+
+将原有地址https://updates.jenkins.io/update-center.json替换为清华源https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/update-center.json
+
+
+
+![2024-06-22 160401](\img\springBoot\2024-06-22 160401.png)
+
+
+
+![2024-06-22 160430](\img\springBoot\2024-06-22 160430.png)
+
+
+
+**继续下载Git插件**
+
+![2024-06-22 160802](\img\springBoot\2024-06-22 160802.png)
+
+配置Java环境和Mvn环境
+
+![2024-06-22 160510](\img\springBoot\2024-06-22 160510.png)
+
+
+
+![2024-06-22 160556](\img\springBoot\2024-06-22 160556.png)
+
+
+
+![2024-06-22 160627](\img\springBoot\2024-06-22 160627.png)
+
+
+
+
+
+### 4、创建工程
+
+![2024-06-22 160653](\img\springBoot\2024-06-22 160653.png)
+
+
+
+![2024-06-22 160719](\img\springBoot\2024-06-22 160719.png)
+
+![2024-06-22 160901](\img\springBoot\2024-06-22 160901.png)
+
+
+
+![2024-06-22 160926](\img\springBoot\2024-06-22 160926.png)
+
+![2024-06-22 160948](\img\springBoot\2024-06-22 160948.png)
+
+
+
+```shell
+docker-compose up -d
+```
+
+保存退出
+
+### 5、构建项目
+
+![2024-06-22 161026](\img\springBoot\2024-06-22 161026.png)
+
+
+
+查看控制台输出
+
+![2024-06-22 161150](\img\springBoot\2024-06-22 161150.png)
+
+
+
+![2024-06-22 161253](\img\springBoot\2024-06-22 161253.png)
+
+
+
+![2024-06-22 161325](\img\springBoot\2024-06-22 161325.png)
+
+
+
+构建完成
+
+### 6、访问验证
+
+![2024-06-22 161419](\img\springBoot\2024-06-22 161419.png)
+
+
+
+**至此，gogs+jenkins实现自动化部署已实现**
+
+
+
+## 常见问题
+
+### jenkins构建后，如何删除再次构建？
+
+jenkins在初始化之后，会在家目录下生成一个.jenkins的隐藏文件
+
+```shell
+cd 
+ls -a
+rm -rf .jenkins
+```
+
+删除这个文件之后，即可再次构建。
+
+
+
+### jenkins构建时，报错 提示字体问题的解决方法
+
+安装字体库
+
+```
+yum install dejavu-sans-fonts
+yum install fontconfig
+fc-cache --force
+```
+
