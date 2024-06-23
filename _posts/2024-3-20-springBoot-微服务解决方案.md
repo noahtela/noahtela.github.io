@@ -30,9 +30,7 @@ tags:
 
 ## 前言
 
-本教程适用于centos7，centos7安装教程及网络配置参照
-
-[linux-虚拟机安装centos及网络配置 - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2023/12/09/虚拟机安装centos及网络配置/)
+本教程适用于centos7，centos7安装教程及网络配置参照[linux-虚拟机安装centos及网络配置 - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2023/12/09/虚拟机安装centos及网络配置/)
 
 本教程涉及到的安装包、docker镜像、系统镜像：`https://www.123pan.com/s/gIBcVv-JzyN3.html`提取码:WD3G
 
@@ -189,9 +187,7 @@ OS name: "linux", version: "3.10.0-1160.108.1.el7.x86_64", arch: "amd64", family
 
 ## 四、安装docker（两台都需要）
 
-Docker安装请参照（**因为国内镜像源关闭，所以不用设置ustc的镜像，省略2.2**）：
-
-[linux软件-docker - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2024/02/17/linux软件-docker/)
+Docker安装请参照（**因为国内镜像源关闭，所以不用设置ustc的镜像，省略2.2**）：[linux软件-docker - Xavier的博客 | Xavier Blog (830sir.top)](https://blog.830sir.top/2024/02/17/linux软件-docker/)
 
 ![2024-06-22 000444](\img\springBoot\2024-06-22 000444.png)
 
@@ -817,6 +813,8 @@ http://192.168.171.21:9090/
 
 
 
+**安装maven插件**
+
 ![2024-06-22 160401](\img\springBoot\2024-06-22 160401.png)
 
 
@@ -903,7 +901,19 @@ docker-compose up -d
 
 ## 常见问题
 
-### jenkins构建后，如何删除再次构建？
+### jenkins初始化时，报错 提示字体问题的解决方法
+
+安装字体库
+
+```shell
+yum install dejavu-sans-fonts
+yum install fontconfig
+fc-cache --force
+```
+
+
+
+### jenkins初始化后，如何重新初始化？
 
 jenkins在初始化之后，会在家目录下生成一个.jenkins的隐藏文件
 
@@ -914,16 +924,3 @@ rm -rf .jenkins
 ```
 
 删除这个文件之后，即可再次构建。
-
-
-
-### jenkins构建时，报错 提示字体问题的解决方法
-
-安装字体库
-
-```
-yum install dejavu-sans-fonts
-yum install fontconfig
-fc-cache --force
-```
-
