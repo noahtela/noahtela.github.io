@@ -91,8 +91,6 @@ page-mathjax: false
 # Friends
 friends:
   [
-    { title: "乱序（Midare）", href: "http://mida.re/" },
-    { title: "Ebn Zhang", href: "https://ebnbin.dev/" },
-    { title: "Kun Qian", href: "http://kunq.me" },
-    { title: "卿云公益GPT", href: "http://gpt.830sir.top" }
+    { title: "易优评-卿云官网", href: "http://qy.830sir.top/" },
+    { title: "卿云-AI问答", href: "http://chat.qingyunzc.cc" }
   ]
