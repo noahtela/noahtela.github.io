@@ -741,3 +741,20 @@ docker start registry
 ```
 docker push 192.168.184.141:5000/jdk1.8
 ```
+
+
+
+
+
+## run 容器常用参数：
+
+-  -e 添加环境变量
+- --add-host 来添加域名和IP信息到容器的/etc/hosts文件中。例如
+
+```shell
+docker run --add-host=myhostname:10.180.8.1 --name test -it debian 
+```
+
+- -v 目录映射
+- -p 端口映射
+- --restart=always 当 Docker 重启时，容器自动启动。
