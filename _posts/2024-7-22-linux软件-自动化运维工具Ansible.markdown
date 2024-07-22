@@ -2,7 +2,7 @@
   layout:     post
 title:      "linux软件-自动化运维工具Ansible"
 subtitle:   " \"linux\""
-date:       2024-7-22 15:41:12
+date:       2024-7-22 16:41:12
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
 catalog: true
