@@ -173,6 +173,8 @@ ansible "~(webdb).*.magedul.com" -m ping
 
 ### Command：在远程主机执行命令，默认模块，可忽略-m选项
 
+![image-20240724143743852](\img\springBoot\image-20240724143743852.png)
+
 - ansible srvs -m command -a 'service vsftpd start
 - ansible srvs -m command -a 'echo magedu |passwd --stdin wang’不成功
 - 此命令不支持 SVARNAME< > | ; &等，用shell模块实现
