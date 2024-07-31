@@ -62,7 +62,7 @@ tags:
 
    这将列出所有配置变量
 
-   ![image-20240730112633097](D:\blog\img\springBoot\image-20240730112633097.png)
+   ![image-20240730112633097](\img\springBoot\image-20240730112633097.png)
 
 3. 列出所有可用的配置变量名称
 
