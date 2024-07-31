@@ -1,0 +1,163 @@
+---
+layout:     post
+title:      "shell编程-复习(读宝塔安装脚本新知)"
+subtitle:   " \"shell编程\""
+date:       2024-7-31 11:22:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - linux学习
+    - shell编程
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# shell编程-复习(读宝塔安装脚本新知)
+
+
+
+## getconf
+
+### 简介
+
+`getconf` 是一个在类 Unix 操作系统（如 Linux、BSD 等）中常用的命令行工具，用于查询系统配置变量的值。这些配置变量定义了系统的各种限制和参数，包括文件系统、进程、内存管理、时间精度等方面。
+
+### 主要功能
+
+- **查询系统配置变量**：`getconf` 可以查询单个配置变量的值，也可以列出所有配置变量的值。
+- **显示系统限制**：包括文件名长度、路径名长度、进程数、文件大小等系统限制。
+- **显示时间精度**：系统时钟的精度。
+- **显示内存分配参数**：内存分配的最小和最大单位。
+- **显示文件系统参数**：文件系统的相关限制，如最大文件数、最大文件大小等。
+- **显示进程资源参数**：进程可以使用的资源限制，如最大打开文件数、最大用户进程数等。
+
+### 常用选项
+
+- -a：列出所有系统配置变量的值
+- -v：指定要查询的特定版本的系统配置变量
+- -l：列出所有可用的配置变量名称
+
+### 示例
+
+1. 查询单个配置变量
+
+   ```bash
+   getconf PAGESIZE
+   ```
+
+   这将返回系统内存页的大小
+
+2. 列出所有配置变量
+
+   ```shell
+   getconf -a
+   ```
+
+   这将列出所有配置变量
+
+   ![image-20240730112633097](D:\blog\img\springBoot\image-20240730112633097.png)
+
+3. 列出所有可用的配置变量名称
+
+   ```shell
+   getconf -l
+   ```
+
+   这将列出所有可用的配置变量名称
+
+
+
+## cat /etc/redhat-release
+
+
+
+用于显示当前系统上安装的 Red Hat 或 CentOS 等基于 Red Hat 的 Linux 发行版的版本信息。输出结果通常会显示发行版的名称和版本号。例如：
+
+```shell
+CentOS Linux release 7.9.2009 (Core)
+```
+
+
+
+## /proc/cpuinfo
+
+```shell
+[root@hcss-ecs-c81d ~]# cat /proc/cpuinfo
+#标识系统中的逻辑CPU编号。如果有多个CPU核心或超线程（HT），每个逻辑CPU会有一个唯一的编号。
+processor       : 0             
+#CPU制造商的标识符
+vendor_id       : GenuineIntel
+#CPU的家族编号，用于标识CPU的架构和设计
+cpu family      : 6
+#CPU的型号编号，用于标识特定的CPU版本
+model           : 106
+#CPU的型号名称
+model name      : Intel(R) Xeon(R) Gold 6348 CPU @ 2.60GHz
+#CPU的步进编号，用于标识CPU的修订版本。
+stepping        : 6
+#CPU微码的版本。
+microcode       : 0x1
+#CPU的当前运行频率
+cpu MHz         : 2600.000
+#CPU缓存的大小
+cache size      : 43008 KB
+#物理CPU的标识符，用于区分多个物理CPU。
+physical id     : 0
+#共享同一个物理CPU核心的逻辑CPU数量。
+siblings        : 2
+#物理核心的标识符，用于区分同一个物理CPU中的不同核心。
+core id         : 0
+#物理CPU中的核心数量。
+cpu cores       : 1
+#用于标识CPU的APIC（高级可编程中断控制器）编号。
+apicid          : 0
+#初始APIC编号
+initial apicid  : 0
+#是否支持浮点运算单元（Floating Point Unit）。
+fpu             : yes
+#是否支持浮点异常。
+fpu_exception   : yes
+#CPUID指令的级别。
+cpuid level     : 13
+# 是否支持写保护（Write Protect）。
+wp              : yes
+#CPU支持的特性标志
+flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc eagerfpu pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single ssbd rsb_ctxsw ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq md_clear spec_ctrl intel_stibp arch_capabilities
+#一个系统性能估算值，通常是CPU频率的两倍
+bogomips        : 5200.00
+#CLFLUSH指令的缓存行大小。
+clflush size    : 64
+#缓存对齐大小。
+cache_alignment : 64
+#物理地址和虚拟地址的大小
+address sizes   : 42 bits physical, 48 bits virtual
+#电源管理特性。
+power management:
+```
+
+## /etc/issue
+
+`/etc/issue`文件通常包含在用户通过本地控制台或虚拟控制台登录之前显示的预登录消息。这个文件的内容可以根据系统的具体配置而有所不同，但一般包含一些基本的系统信息，比如发行版的名称、版本号、内核版本等。
+
+## uname -a
+
+用于显示系统的详细信息。这个命令会输出一系列关于当前操作系统的信息，包括内核名称、网络节点名、内核版本、内核发布日期、硬件架构类型、处理器类型以及操作系统名称等。
+
+```shell
+Linux hcss-ecs-c81d 3.10.0-1160.108.1.el7.x86_64 #1 SMP Thu Jan 25 16:17:31 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+```
+
+- `Linux`是内核名称
+- `hcss-ecs-c81d`是主机名
+- `3.10.0-1160.108.1.el7.x86_64`是内核版本
+- `#1 SMP Thu Jan 25 16:17:31 UTC 2024`是内核发布时期
+- `x86_64`是硬件架构类型
+- `GNU/Linux`是操作系统名称
+
