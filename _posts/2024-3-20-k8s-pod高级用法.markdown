@@ -1,0 +1,470 @@
+---
+layout:     post
+title:      "linux-pod高级用法"
+subtitle:   " \"linux\""
+date:       2024-3-20 15:06:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# pod高级用法
+
+
+
+## 一、pod资源的高级用法
+
+
+
+Pod 高级用法：node 节点选择器和 nodeName
+
+
+
+### 1、nodeName
+
+
+
+在 Kubernetes 中，NodeName 是每个 Node 节点的唯一标识符，它是一个字符串，通常是节 点的主机名（hostname）。在创建 Pod 时，可以通过指定 nodeName 字段来将 Pod 调度到特定的 Node 节点上。
+
+```yaml
+#vi pod-node.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+  namespace: default
+  labels:
+    app: busybox-tomcat
+    env: pro
+spec:
+  nodeName: node1
+  containers:
+  - name: tomcat
+    ports:
+    - containerPort: 8080
+    image: tomcat:8.5.34-jre8-alpine
+    imagePullPolicy: IfNotPresent
+  - name: busybox
+    image: busybox:latest
+```
+
+​	启动测试
+
+```shell
+kubectl apply -f pod-node.yaml 
+```
+
+![image-20240320143217400](\img\springBoot\image-20240320143217400.png)
+
+
+
+
+
+### 2、nodeSelector
+
+
+
+在 Kubernetes 中，nodeSelector 是一种用于在 Pod 级别上选择运行节点的方法。通过使用 nodeSelector 字段，你可以指定一组键值对（标签），以便将 Pod 调度到具有匹配标签的节点上运行。 每个节点都可以使用一组标签进行标识，这些标签可以根据硬件规格、操作系统、地理位置或其他特定的属性来定义。当创建 Pod 时，你可以通过在 Pod 的配置中指定 `nodeSelector` 字段，来告诉 Kubernetes 调度器选择具有匹配标签的节点来运行该 Pod。
+
+
+
+```yaml
+#vi pod-nodeSelector.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: nginx
+      imagePullPolicy: IfNotPresent
+  nodeSelector:
+    disk: ssd
+    region: us-west
+```
+
+
+
+启动测试
+
+![image-20240320144232778](\img\springBoot\image-20240320144232778.png)
+
+
+
+```shell
+kubectl apply -f pod-nodeSelector.yaml
+```
+
+![image-20240320144753729](\img\springBoot\image-20240320144753729.png)
+
+因为都没打标签，所以没有资源可以调度 `pending`
+
+```shell
+#加标签
+kubectl label nodes node1 disk=ssd
+kubectl label nodes node1 region=us-west
+```
+
+![image-20240320145019745](\img\springBoot\image-20240320145019745.png)
+
+正在创建
+
+
+
+## 二、Pod 高级用法：亲和性 affinity
+
+在 k8s 中亲和性有两种：**节点亲和性（node affinity）**和 **Pod 亲和性（pod affinity）**
+
+Pod 亲和性（Pod Affinity）：Pod 亲和性用于指定 Pod 之间的关系，使它们倾向于在同一节点或具有相似特征的节点上运行。这可以在以下场景中发挥作用：
+
+1）数据本地性：当两个或多个 Pod 需要访问相同的本地数据时，可以使用 Pod 亲和性 将它们调度到同一节点上。例如，在分布式数据库中，多个数据库实例需要访问相同的 数据卷或存储，可以通过 Pod 亲和性将它们调度到同一节点上，减少网络传输延迟。
+
+2）互为依赖：当两个或多个 Pod 之间存在依赖关系，需要相互通信或协同工作时，可以使用 Pod 亲和性将它们调度到同一节点上。例如，在微服务架构中，某个服务需要与特定的缓存服务进行交互，可以使用 Pod 亲和性将它们调度到同一节点上，提高性能和减少网络开销。 
+
+3）服务发现和负载均衡：在需要实现服务发现和负载均衡的场景中，可以使用 Pod 亲和性将属于同一服务的多个实例调度到同一节点或相近的节点上。这样可以提高服务的可用性、降低延迟，并简化负载均衡配置。
+
+
+
+节点亲和性（Node Affinity）：节点亲和性用于指定 Pod 与节点之间的关系，使 Pod 倾向于在具有特定标签或节点特征的节点上运行。这可以在以下场景中发挥作用：
+
+1）资源需求：当某个 Pod 对计算资源（如 CPU、内存）或其他特定硬件资源（如GPU）有特定需求时，可以使用节点亲和性将它调度到具有相应资源的节点上。这有助于优化资源利用和性能。
+
+2）逻辑分组：当需要将相关的 Pod 分组部署到特定节点上时，可以使用节点亲和性。例如，在分布式系统中，某个节点需要承担特定的角色或任务，可以使用节点亲和性将相关的 Pod 调度到该节点上，以便实现逻辑上的分组和管理。 
+
+3）特定硬件或软件要求：当某个 Pod 需要依赖特定的硬件设备或软件环境时，可以使用节点亲和性将它调度到具备所需条件的节点上。例如，某个 Pod 需要与具有特定硬件加速器的节点进行通信，可以使用节点亲和性将它调度到具备所需硬件的节点上。
+
+
+
+
+
+### 1、node节点亲和性
+
+
+
+`nodeAffinity`
+
+
+
+```
+# kubectl explain pods.spec.affinity
+
+KIND:     Pod
+VERSION:  v1
+
+RESOURCE: affinity <Object>
+
+DESCRIPTION:
+     If specified, the pod's scheduling constraints
+
+     Affinity is a group of affinity scheduling rules.
+
+FIELDS:
+   nodeAffinity <Object>  ##node亲和性
+     Describes node affinity scheduling rules for the pod.
+
+   podAffinity  <Object>  ##pod亲和性
+     Describes pod affinity scheduling rules (e.g. co-locate this pod in the
+     same node, zone, etc. as some other pod(s)).
+
+   podAntiAffinity      <Object>  ##pod反亲和性
+     Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod
+     in the same node, zone, etc. as some other pod(s)).
+
+```
+
+```
+[root@master k8s]# kubectl explain pods.spec.affinity.nodeAffinity
+KIND:     Pod
+VERSION:  v1
+
+RESOURCE: nodeAffinity <Object>
+
+DESCRIPTION:
+     Describes node affinity scheduling rules for the pod.
+
+     Node affinity is a group of node affinity scheduling rules.
+
+FIELDS:
+   preferredDuringSchedulingIgnoredDuringExecution      <[]Object>  #软
+     The scheduler will prefer to schedule pods to nodes that satisfy the
+     affinity expressions specified by this field, but it may choose a node that
+     violates one or more of the expressions. The node that is most preferred is
+     the one with the greatest sum of weights, i.e. for each node that meets all
+     of the scheduling requirements (resource request, requiredDuringScheduling
+     affinity expressions, etc.), compute a sum by iterating through the
+     elements of this field and adding "weight" to the sum if the node matches
+     the corresponding matchExpressions; the node(s) with the highest sum are
+     the most preferred.
+
+   requiredDuringSchedulingIgnoredDuringExecution       <Object>  #硬
+     If the affinity requirements specified by this field are not met at
+     scheduling time, the pod will not be scheduled onto the node. If the
+     affinity requirements specified by this field cease to be met at some point
+     during pod execution (e.g. due to an update), the system may or may not try
+     to eventually evict the pod from its node.
+```
+
+
+
+
+
+测试requiredDuringSchedulingIgnoredDuringExecution硬亲和性
+
+
+
+```yaml
+[root@master ~]# vim nodeaffinity-1.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodeaffinity-1
+  namespace: default
+  labels:
+   app: myapp
+   item: pro
+spec:
+  containers:
+  - name: myapp
+    image: ikubernetes/myapp:v1
+    imagePullPolicy: IfNotPresent
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: a
+            operator: In
+            values:
+            - b
+
+```
+
+我们检查当前节点中有任意一个节点拥有 a=b 标签，就可以把 pod 调度到有 a=b 这个标签的节点上。
+
+
+
+```
+kubectl apply -f nodeaffinity-1.yaml
+kubectl get pods -owide -l app=myapp
+```
+
+
+
+
+
+**键值运算关系：**
+
+**In：label 的值在某个列表中**
+
+**NotIn：label 的值不在某个列表中**
+
+**Gt：label 的值大于某个值**
+
+**Lt：label 的值小于某个值**
+
+**Exists：某个 label 存在**
+
+**DoesNotExist：某个 label 不存在**
+
+
+
+### 2、Pod 和 Pod 亲和性
+
+
+
+podAffinity：表示 Pod 与其它 Pod 的亲和性。
+
+
+
+```
+requiredDuringSchedulingIgnoredDuringExecution   （硬亲和性）
+preferredDuringSchedulingIgnoredDuringExecution  （软亲和性）
+```
+
+podaffinity（pod 亲和性）：Pod 亲和性是指一组 Pod 可以被调度到同一节点上，即它们互相吸引， 倾向于被调度在同一台节点上。例如，假设我们有一组具有相同标签的 Pod，通过使用 Pod 亲和性规则，我们可以让它们在同一节点上运行，以获得更高的性能和更好的可靠性。
+
+podunaffinity（pod 反亲和性）：Pod 反亲和性是指一组 Pod 不应该被调度到同一节点上，即它们互相排斥，避免被调度在同一台节点上。例如，如果我们有一组应用程序 Pod，我们可以使用 Pod反亲和性规则来避免它们被调度到同一节点上，以减少单点故障的风险和提高可靠性。
+
+
+
+测试pod 和 pod 亲和性
+
+
+
+```yaml
+#vim podaffinity-require.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: first
+  labels:
+    app: first
+spec:
+  containers:
+  - name: myapp
+    image: ikubernetes/myapp:v1
+    imagePullPolicy: IfNotPresent
+
+```
+
+```ymal
+# vim podaffinity-require-1.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: second
+  labels:
+    app: second
+spec:
+  containers:
+  - name: myapp
+    image: ikubernetes/myapp:v1
+    imagePullPolicy: IfNotPresent
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - {key: app, operator: In, values: ["first"]}
+        topologyKey: kubernetes.io/hostname
+```
+
+上面表示创建的 second 这个 pod 与拥有 app=first 标签的 pod 进行亲和性
+
+topologyKey: kubernetes.io/hostname：这个是 Kubernetes 中一个用于指定节点位置拓扑的 
+
+关键字，这个是必须字段，kubernetes.io/hostname 是一个节点标签的 key 值，不同的节点这个 key 对应的 value 值是节点主机名，它表示 Pod 应该与具有相同的主机名的节点进行亲和性或反亲和性调度。也就是两个pod 调度到同一个 node 节点或者不同的 node 节点上。
+
+
+
+```shell
+kubectl get nodes -l kubernetes.io/hostname --show-labels
+```
+
+![image-20240320150545468](\img\springBoot\image-20240320150545468.png)
+
+
+
+
+
+## 三、污点和容忍度
+
+我们给节点打一个污点，不容忍的 pod 就运行不上来，**污点就是定义在节点上的键值属性数据**， 
+
+可以定决定拒绝那些 pod，**容忍度是定义在 pod 上的**，用来指定能容忍哪些污点
+
+
+
+**taints 是键值数据，用在节点上，定义污点** 
+
+**tolerations 是键值数据，用在 pod 上，定义容忍度，能容忍哪些污点**
+
+![image-20240320150906379](\img\springBoot\image-20240320150906379.png)
+
+
+
+```shell
+kubectl describe nodes master #可以查看污点
+```
+
+```shell
+#kubectl explain node.spec.taints
+
+
+KIND:     Node
+VERSION:  v1
+RESOURCE: taints <[]Object>
+DESCRIPTION:
+FIELDS:
+   effect	<string> -required-
+   key	<string> -required-
+   timeAdded	<string>
+   value	<string>
+```
+
+taints 的 effect 用来定义对 pod 对象的排斥等级（效果）：
+
+**NoSchedule：** 
+
+仅影响 pod 调度过程，当 pod 能容忍这个节点污点，就可以调度到当前节点，后来这个节点的 
+
+污点改了，加了一个新的污点，使得之前调度的 pod 不能容忍了，对现存的 pod 对象不产生影响
+
+**NoExecute：** 
+
+既影响调度过程，又影响现存的 pod 对象，如果现存的 pod 不能容忍节点后来加的污点，这个pod 就会被驱逐
+
+**PreferNoSchedule：** 
+
+最好不，也可以，是 NoSchedule 的柔性版本
+
+
+
+一个 node 可以有多个污点。
+
+一个 pod 可以有多个容忍。
+
+kubernetes 执行多个污点和容忍方法类似于过滤器。
+
+如果一个 node 有多个污点，且 pod 上也有多个容忍，只要 pod 中容忍能包含node上设置的全部污点，就可以将 pod 调度到该 node上。
+
+
+
+
+
+设置一个容忍污点的pod
+
+```yaml
+[root@master ~]# kubectl taint node node2 node-type=production:NoSchedule
+[root@master ~]# vim pod-demo-1.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-deploy
+  namespace: default
+  labels:
+    app: myapp
+    release: canary
+spec:
+  containers:
+  - name: myapp
+    image: ikubernetes/myapp:v1
+    imagePullPolicy: IfNotPresent
+    ports:
+    - name: http
+      containerPort: 80
+  tolerations:
+  - key: "node-type"
+    operator: "Equal"
+    value: "production"
+effect: "NoSchedule"
+
+#如果 operator 是 Exists （此时容忍度不能指定 value） 可以同时容忍多个K值
+#如果 operator 是 Equal ，则它们的 value 应该相等  
+  - key: "node-type"
+    operator: "Exists"
+    effect: "NoSchedule"
+
+[root@master ~]# kubectl apply -f pod-demo-1.yaml 
+[root@master ~]# kubectl get pod -o wide
+
+```
+

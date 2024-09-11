@@ -1,0 +1,66 @@
+---
+layout:     post
+title:      "Enable注解原理"
+subtitle:   " \"SpringBoot学习记录\""
+date:       2023-12-03 9:35:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - SpringBoot
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## SpringBoot自动配置-Enable注解原理
+
+SpringBoot中提供了很多Enable开头的注解，这些注解都是用于动态启用某些功能的。其底层原理是使用@Import注解导入一些配置类，实现Bean的动态加载
+
+SpringBoot工程不能直接获取其他工程中定义的Bean，原因在@SpringBootApplication注解中的@ComponentScan注解扫描范围是当前引导类所在包及其子包
+
+解决方法：
+
+​		1、使用@ComponentScan扫描（太low，不推荐使用）
+
+​		2、可以使用@Import注解，加载类。这些类都会被spring创建，放入IOC容器
+
+![image-20231203095652116](\img\springBoot\image-20231203095652116.png)
+
+​		还不是特别方便
+
+​		3、可以对Import注解进行封装
+
+
+
+## @Import详解
+
+
+
+使用@Import导入的类会被Spring加载到IOC容器中。而@import提供4中种用法
+
+​		1、导入Bean
+
+​		2、导入配置类
+
+​		3、导入ImportSelector实现类。一般用于加载配置文件中的类
+
+​		4、导入ImportBeanDefinitionRegistrar实现类
+
+![image-20231203100935884](\img\springBoot\image-20231203100935884.png)
+
+
+
+## @EnableAutoConfiguration详解
+
+
+
+1、@EnableAutoConfiguration 注解内部使用@Import（AutoConfigurationImportSelector.class）来加载配置类
+
+2、配置文件位置：META-INF/spring.factories,该配置文件中定义了大量的配置类，当springBoot应用启动时，会自动加载这些配置类，初始化Bean
+
+3、并不是所有的Bean都会被初始化，在配置类中使用Confdition来加载满足条件的Bean

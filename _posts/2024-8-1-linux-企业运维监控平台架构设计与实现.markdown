@@ -1,0 +1,48 @@
+---
+layout:     post
+title:      "linux-企业运维监控平台架构设计与实现"
+subtitle:   " \"linux\""
+date:       2024-8-1 9:22:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - linux学习
+    - 监控平台
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# linux-企业运维监控平台架构设计与实现
+
+
+
+## zabbix
+
+监控主要监控什么指标？
+
+角度1:(单台机器)
+
+- 硬件信息:磁盘，raid状态，温度，风扇转速，机房温度，湿度
+- 系统信息:CPU，内存，磁盘，负载，网络
+- 服务信息:各种服务的进程，端口，状态，特定的信息
+- 业务信息:应用,程序代码是否有问题
+
+角度2:(网站集群监控)
+
+- DNS解析：ping/dig/nslookup/host
+- DNS解析域CDN是否OK
+- TCP三次握手-网站负载均衡监控
+- http请求报文-监控web日志查看状态码
+
+## zabbix监控架构
+
+- zabbix是一个cs（服务端/客户端）架构的服务
+- zabbix-agent获取数据-->发送给zabbix-server服务端--->数据会被存放到数据库--->zabbix web页面展示数据
+- 采集数据--->数据收集--->数据

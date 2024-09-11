@@ -1,0 +1,29 @@
+---
+layout:     post
+title:      "切换web服务器"
+subtitle:   " \"SpringBoot学习记录\""
+date:       2023-12-02 16:55:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - SpringBoot
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## SpringBoot切换内置web服务器
+
+SpringBoot的Web环境中默认使用tomcat作为内置服务器，其实SpringBoot提供了四种内置服务器供我们选择
+
+![image-20231202170259823](\img\springBoot\image-20231202170259823.png)
+
+内置的四种web服务器
+
+![image-20231202170559832](\img\springBoot\image-20231202170559832.png)
+

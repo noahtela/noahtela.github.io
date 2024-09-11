@@ -1,0 +1,172 @@
+---
+layout:     post
+title:      "linux-k8s基础知识问答"
+subtitle:   " \"linux\""
+date:       2024-3-20 10:51:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# k8s基础知识问答
+
+
+
+## 1、pod的创建流程
+
+第一步:
+客户端提交创建 Pod 的请求，可以通过调用 API Server 的 Rest API 接口，也可以通过 kubectl 命令行工具。
+
+第二步:
+apiserver 接收到 pod 创建请求后，会将 yaml 中的属性信息(metadata)写入 etcd。
+
+第三步:
+apiserver 触发 watch 机制准备创建 pod，信息转发给调度器 scheduler，调度器使用调度算法选择node，调度器将 node 信息给 apiserver,apiserver 将绑定的 node 信息写入 etcd。
+
+第四步:
+apiserver 又通过 watch 机制，调用 kubelet，指定 pod 信息，调用 Docker API创建并启动 pod 内的容器。
+
+第五步:
+创建完成之后反馈给 kubelet,kubelet 又将 pod 的状态信息给 apiserver,apiserver 又将 pod 的状态信息写入 etcd。
+
+
+
+## 2、ymal书写格式
+
+
+
+Kubernetes（K8s）中的Pod资源清单是使用YAML格式编写的。以下是一个基本的Pod资源清单的例子：
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+  labels:
+    app: my-app
+spec:
+  containers:
+  - name: my-container
+    image: my-image
+    ports:
+    - containerPort: 8080
+```
+
+这个资源清单定义了一个Pod，包含一个名为`my-container`的容器，该容器从`my-image`镜像启动，并在8080端口监听。
+
+下面是每个字段的解释：
+
+- `apiVersion`: Kubernetes API的版本，这里是v1。
+- `kind`: 要创建的对象类型，这里是Pod。
+- `metadata`: 资源的元数据，包括名称和标签。
+- `spec`: 资源的详细规格，包括容器列表和每个容器的详细信息。
+
+在容器的详细信息中：
+
+- `name`: 容器的名称。
+- `image`: 容器的镜像。
+- `ports`: 容器开放的端口列表，包括每个端口的详细信息。
+
+在每个端口的详细信息中：
+
+- `containerPort`: 容器监听的端口。
+
+这只是一个基本的Pod资源清单。在实际使用中，可能还需要添加更多的字段，例如环境变量、卷、资源限制等。
+
+
+
+## 3、创建pod过程中，没有镜像，pods会显示什么状态
+
+
+
+在 Kubernetes 环境中，如果 Pod 中的容器不能从配置的容器镜像仓库拉取镜像，因为没有可用的镜像，Pod 会显示 `ImagePullBackOff` 或 `ErrImagePull` 状态。
+
+1. **ErrImagePull**: 这个状态表示 Kubernetes 尝试拉取容器镜像时遇到了错误。这可能是因为镜像名称错误、镜像不存在、权限问题或网络问题等。
+
+2. **ImagePullBackOff**: 当连续尝试拉取镜像失败后，Kubernetes 会进入退避策略，暂时停止尝试拉取镜像，并在一段时间后重试。`ImagePullBackOff` 状态意味着 Kubernetes 在之前尝试过拉取镜像并失败了，现在正在等待下一次重试。
+
+如果 Pod 一直无法成功拉取镜像，它将永远不会进入 `Running` 状态。解决这个问题通常涉及确保镜像名称和标签正确无误，确保 Kubernetes 集群能够访问镜像仓库，以及确保所有的认证信息（如镜像仓库的凭证）都已正确配置。
+
+
+
+## 4、pending是什么状态，什么情况下会出现
+
+
+
+在 Kubernetes 中，`Pending` 是 Pod 的一种状态，表示 Pod 已被 Kubernetes 系统接受，但有一个或多个容器尚未创建并运行。以下是一些可能导致 Pod 处于 `Pending` 状态的情况：
+
+1. **资源不足**：如果集群中没有足够的资源（如 CPU、内存或存储）来运行 Pod，Pod 就可能会处于 `Pending` 状态。这可能是因为所有的节点都已经满载，或者没有任何一个节点能满足 Pod 的资源需求。
+
+2. **调度失败**：Pod 可能因为满足不了调度器的约束条件（例如，节点选择器、亲和性规则、污点和容忍度等）而无法被调度到任何节点上，从而导致 Pod 处于 `Pending` 状态。
+
+3. **镜像无法拉取**：如果 Pod 的镜像无法被成功拉取（例如，由于网络问题、镜像仓库的凭证错误、镜像不存在等），Pod 也可能会处于 `Pending` 状态。
+
+4. **卷无法挂载**：如果 Pod 需要的卷无法被成功挂载（例如，由于存储的问题或者权限的问题），Pod 也可能会处于 `Pending` 状态。
+
+要查找导致 Pod 处于 `Pending` 状态的具体原因，你可以使用 `kubectl describe pod <pod-name>` 命令查看 Pod 的事件和详细信息。
+
+
+
+
+
+## 5、简单介绍一下污点和容忍度
+
+
+
+在 Kubernetes 中，污点（Taints）和容忍度（Tolerations）是一种确保 Pods 不会被调度到不适合的节点上的机制。这种机制通常用于专门的场景，比如当你有一些节点是专门用于特定类型的工作负载时。
+
+### 污点（Taints）
+
+污点是应用于节点的，它们会阻止所有没有匹配容忍度的 Pod 调度到该节点上。污点由三个属性组成：
+
+1. **键（key）**：污点的名称。
+2. **值（value）**：污点的值，它可以是任意字符串。
+3. **效果（effect）**：
+   - `NoSchedule`：一旦设置，没有匹配容忍度的 Pod 将不会被调度到该节点。
+   - `PreferNoSchedule`：Kubernetes 将尽量避免将没有匹配容忍度的 Pod 调度到该节点，但这不是强制的。
+   - `NoExecute`：不仅新的 Pods 不能调度到带有该污点的节点，已经在节点上运行的 Pods 如果不匹配容忍度，也会被驱逐出节点。
+
+添加污点到节点的命令是：
+
+```shell
+kubectl taint nodes <node-name> <key>=<value>:<effect>
+```
+
+### 容忍度（Tolerations）
+
+容忍度则是应用于 Pods 的。一个 Pod 可以包含多个容忍度，每个容忍度使得该 Pod 能够被调度到具有匹配污点的节点上。
+
+容忍度在 Pod 的定义中指定，示例如下：
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: myimage
+  tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"
+```
+
+在这个例子中，Pod `mypod` 将能够容忍键为 `key`，值为 `value`，效果为 `NoSchedule` 的污点，因此它能够被调度到具有这个污点的节点上。污点和容忍度协同工作，允许节点控制哪些 Pod 可以或不可以被调度到该节点上。这是一种高级调度功能，用于特殊的调度需求。
+
+
+

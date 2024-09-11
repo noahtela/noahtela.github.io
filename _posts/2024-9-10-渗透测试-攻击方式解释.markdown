@@ -1,0 +1,83 @@
+---
+layout:     post
+title:      "渗透测试-攻击方式解释"
+subtitle:   " \"安全\""
+date:       2024-9-10 9:22:12
+author:     "yangsir"
+header-img: "img/bg-2.jpg"
+catalog: true
+tags:
+    - 笔记
+    - 渗透测试
+    - 安全
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## 攻击方式总结
+
+#### **应用层攻击方式**
+
+GET | GET Flood：向目标主机发送大量的GET请求，导致目标服务器瘫痪。
+
+POST | POST Flood：向目标主机发送大量的POST请求，导致目标服务器瘫痪
+
+OVH | Bypass OVH：绕过或规避OVH提供的安全措施。OVH是一个著名的网络托管和云服务提供商，它提供了多种DDoS防护解决方案来保护其客户免受恶意流量攻击
+
+RHEX | Random HEX：向目标主机发送大量随机生成的十六进制进数据，以填满目标主机的带宽。
+
+STOMP | Bypass chk_captcha：是一种利用 STOMP（Simple Text Oriented Messaging Protocol）协议漏洞进行的攻击，以绕过验证码（captcha）检查。
+
+STRESS | Send HTTP Packet With High Byte：向目标服务器发送大量的 HTTP 数据包，其中包含高字节值（即数据包的某些部分具有非常大的数值），以试图消耗资源或导致服务器崩溃。
+
+DYN | A New Method With Random SubDomain：使用随机生成的子域名来干扰、绕过安全防护、或发起攻击。
+
+DOWNLOADER | A New Method of Reading data slowly：这是一种利用缓慢数据读取来执行攻击的策略。这种方法可能用于数据泄露、绕过安全防护、或消耗服务器资源等目的
+
+SLOW | Slowloris Old Method of DDoS：是一种通过缓慢发送 HTTP 请求来消耗目标服务器资源的 DDoS 攻击方法。
+
+NULL | Null UserAgent：在 HTTP 请求中使用空或无效的 User-Agent 头部，这种方法可能用于绕过安全检测、隐匿身份或发起攻击。
+
+COOKIE | Random Cookie PHP 'if (isset($_COOKIE))'：一种基于 PHP 脚本的攻击或漏洞利用方法，具体来说是利用随机生成的 cookie 值来绕过安全检查或攻击应用程序。
+
+PPS | Only 'GET / HTTP/1.1\r\n\r\n'：一种通过发送极简化的 HTTP GET 请求来发起的拒绝服务攻击。
+
+EVEN | GET Method with more header：一种通过附加大量 HTTP 头部字段的 GET 请求来进行攻击的模式。
+
+GSB | Google Project Shield Bypass：一种试图绕过 Google Project Shield 提供的 DDoS 和应用层保护的攻击方式。
+
+DGB | DDoS Guard Bypass：一种绕过 DDoS Guard 提供的防护机制的攻击或策略。
+
+AVB | Arvan Cloud Bypass：一种绕过 Arvan Cloud 提供的防护机制的攻击或策略。
+
+BOT | Like Google bot：一种模拟或伪装成 Googlebot 的机器人（bot）的攻击方式。
+
+APACHE | Apache Expliot：一种利用 Apache HTTP 服务器中的漏洞进行攻击的行为
+
+XMLRPC | WP XMLRPC exploit (add /xmlrpc.php)：主要利用 WordPress 的 XML-RPC 接口中的漏洞进行攻击。
+
+CFB | CloudFlare Bypass：是指绕过 Cloudflare 提供的网络安全和内容交付服务的攻击或绕过策略。
+
+CFBUAM | CloudFlare Under Attack Mode Bypass：指的是绕过 Cloudflare 的 Under Attack Mode（攻击模式）的攻击策略。
+
+#### **网络层攻击方式**
+
+TCP | TCP Flood Bypass：通过向目标服务器发送大量的 TCP 数据包，试图耗尽其资源，导致服务中断或性能下降。
+
+UDP | UDP Flood Bypass：通过向目标服务器发送大量的 UDP 数据包，试图耗尽其资源，导致服务中断或性能下降
+
+SYN | SYN Flood：攻击者利用 TCP 三次握手过程中的 SYN 包，发送大量伪造的连接请求，导致服务器的资源耗尽来导致服务中断的拒绝服务攻击。
+
+CPS | Open and close connections with proxy：一种通过代理服务器来频繁打开和关闭连接的攻击技术，通常用于进行拒绝服务（DoS）或分布式拒绝服务（DDoS）攻击。
+
+ICMP | Icmp echo request flood (Layer3)  ：这种攻击利用 ICMP（互联网控制消息协议）中的“回声请求”消息，通常被称为 Ping Flood 或 ICMP Flood，来耗尽目标系统的网络带宽和资源
+
+CONNECTION | Open connection alive with proxy：一种使用代理服务器来维持一个长时间打开的连接的攻击技术。
+
+VSE | Send Valve Source Engine Protocol：主要针对使用 Valve Source Engine 的在线游戏或应用服务器
+

@@ -1,0 +1,138 @@
+---
+layout:     post
+title:      "k8s-pod的生命周期和健康检测"
+subtitle:   " \"linux\""
+date:       2024-3-24 13:25:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# 生命周期和健康检测
+
+​		
+
+## 健康检测
+
+根据探测结果来实现自动化容器的重启或故障切换等操作，从而提高应用的可靠性和可用性。三种健康探测方式：Liveness Probe（存活探测）、Readiness Probe（就绪探测）、Startup Probe（启动探测）
+
+1. **Liveness Probe(存活探测)**:
+   - 作用: 确定容器是否仍在运行。如果探测失败,kubelet将杀死容器,并根据RestartPolicy决定是否重新启动该容器。
+   - 适用场景: 检测程序是否处于永久故障状态,需要重启。
+2. **Readiness Probe(就绪探测)**:
+   - 作用: 确定容器是否准备好可以接收流量。只有当Pod中的所有容器都通过了就绪探测,它才会获取它的IP并加入集群负载均衡流量。
+   - 适用场景: 确认容器启动后是否已准备好开始接收流量,如程序初始化、缓存预热等。
+3. **Startup Probe(启动探测)**:
+   - 作用: 指示容器中的应用程序在启动过程中是否正常运行。在容器启动后,它会禁用liveness probe,直到给定的失效超时时间段或者启动成功探测通过为止。
+   - 适用场景: 处理启动时间较长的容器,避免它们在应用程序完全启动之前被杀掉。
+
+### 总结
+
+- Liveness Probe关注容器是否"存活"
+- Readiness Probe关注容器是否"准备好"可以接收请求
+- Startup Probe用于延长启动过程中的宽限期,避免启动过程被判定失败
+
+### 注意
+
+**Startup Probe只会在容器启动时执行一次**，与Liveness Probe和Readiness Probe不同,Startup Probe的目的是为了应对启动时间较长的容器,给予容器一个合理的启动宽限期,避免在启动过程中被判定为失败而被杀掉。
+
+Startup Probe的工作流程如下:
+
+1. 当容器启动时,kubelet会首先执行Startup Probe。
+2. 在Startup Probe成功之前,Liveness Probe会被禁用,即容器在启动阶段暂时不受Liveness Probe的影响。
+3. 如果Startup Probe在指定的超时时间内成功,则kubelet会视为容器启动成功,并开始执行Liveness Probe和Readiness Probe。
+4. 如果Startup Probe在超时时间内一直失败,kubelet会重启容器。
+
+因此,Startup Probe只会在容器启动时执行一次,用于判断容器是否已经成功启动。一旦容器启动成功,后续的健康检查将由Liveness Probe和Readiness Probe接管。
+
+需要注意的是,Startup Probe是一个可选的配置,如果容器的启动时间较短,或者你更希望在启动过程中立即执行Liveness Probe,则可以不配置Startup Probe。
+
+### 探测检测方式
+
+
+
+1. exec：在容器中执行指定的命令，如果执行成功，退出码为 0 则探测成功。
+
+2. TCPSocket：通过容器的 IP 地址和端口号执行 TCP 检查，如果能够建立TCP 连接，则表明 
+
+   容器健康。 
+
+3. HTTPGet：通过容器的 IP 地址、端口号及路径调用 HTTP Get 方法，如果响应的状态码大于等
+
+   于 200 且小于 400，则认为容器健康 
+
+注意
+
+1. **readinessProbe**:
+   - 当readinessProbe检测失败时,意味着容器尚未准备好提供服务。
+   - Kubernetes会从该Pod对应的Endpoints列表中删除这个Pod的IP:Port条目。
+   - 这样,流量就不会被转发到这个未准备好的Pod上。
+   - 但是,Pod本身并不会被终止或重启。
+2. **livenessProbe**:
+   - 当livenessProbe检测失败时,意味着容器处于无法恢复的失败状态。
+   - Kubernetes会杀死这个容器,并根据Pod的重启策略(restartPolicy)来决定是否重新启动一个新的容器。
+   - 如果重启成功,新的容器将被添加到对应Service的Endpoints列表中。
+
+这种机制可以确保:
+
+- 通过readinessProbe,只有准备好的Pod才会被添加到Endpoints列表中接收流量。
+- 通过livenessProbe,处于失败状态的容器会被重启,从而保证了服务的可用性和健康状态。
+
+
+
+例：
+
+```yaml
+[root@master1 ~]# vim live-http.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-http
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: liveness
+    image: nginx
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 80
+    livenessProbe:
+      httpGet:
+        path: /index.html
+        port: 80
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /index.html
+        port: 80
+      initialDelaySeconds: 20
+      periodSeconds: 10
+  restartPolicy: Always
+```
+
+initialDelaySeconds：首次探测之前等待的时间，单位是秒。在容器启动之后，等待指定的时间后才开始进行探测，避免容器还未启动完成就开始进行探测，导致探测失败。
+
+periodSeconds：探测器的周期时间，单位是秒。探测器将在每隔一定时间间隔内进行一次探测。默认周期时间是 10 秒
+
+**容器重启策略：**
+
+- Always: 当容器失败时，总是重启容器。这是默认的重启策略。
+
+- OnFailure: 当容器因为非零退出代码(容器出现错误)退出时，才会重启容器。
+
+- Never: 从不重启容器，即使容器失败。
+

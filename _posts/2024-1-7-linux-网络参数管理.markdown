@@ -1,0 +1,253 @@
+---
+  layout:     post
+title:      "linux-网络参数管理"
+subtitle:   " \"linux\""
+date:       2024-1-7 16:28:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - linux学习
+    - 云原生
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+# 网络参数管理
+
+## 一、查看及测试网络
+
+### 1、使用`ifconfig`命令查看网络接口
+
+（1）查看活动（激活）的网络接口
+
+```shell
+ifconfig
+```
+
+（注：虚拟机中`ifconfig`命令需要下载net-tools后才能使用）
+
+![image-20240112153604518](\img\springBoot\image-20240112153604518.png)
+
+（2）查看所有网口
+
+```shell
+ifconfig -a
+```
+
+（3）查看指定的网络接口（不论改网络接口是否处于激活状态）
+
+```
+ifconfig 设备名
+```
+
+![image-20240112154036766](\img\springBoot\image-20240112154036766.png)
+
+
+
+### 2、使用ip、ethtool命令查看网络接口
+
+
+
+（1）查看网络接口的数据链路层信息
+
+```shell
+ip link
+```
+
+![image-20240112155419693](\img\springBoot\image-20240112155419693.png)
+
+（2）查看网络接口的网络层信息
+
+```shell
+ip a
+```
+
+
+
+（3）查看指定网络接口速率、模式等信息
+
+```shell
+ethtool  #网速是假的
+```
+
+![image-20240112160047869](\img\springBoot\image-20240112160047869.png)
+
+###  3、查看主机名、路由表
+
+（1）hostname命令查看主机名
+
+（2）查看路由表
+
+```shell
+route    #查看路由表
+route -n #不执行DNS反向查找，直接显示数字形式的ip地址
+```
+
+![image-20240112160841161](\img\springBoot\image-20240112160841161.png)
+
+
+
+### 4、查看网络连接情况
+
+`netstat`命令
+
+常用选项：
+
+- -a      显示当前主机中所有活动的网络连接信息
+- -n      以数字的形式显示相关信息
+- -r       显示路由表信息
+- -t       显示 TCP 协议相关的信息
+- -u      显示 UDP 协议相关的信息
+- -p      显示与网络连接相关的进程号、进程名称信息(需要 root 权限)
+- -l       查看监听状态的网络连接信息
+
+主要用法
+
+```shell
+netstat -anptu
+netstat -lnpt
+ss -lnpt  #同上
+```
+
+可以判断服务是否启动成功
+
+
+
+### 5、ping 、traceroute命令
+
+测试网络连通性     ping命令
+
+常用选项：
+
+- -c:指定发送数据包的个数
+- -i:当 ping 通时，指定间隔多少秒发送下一个数据包
+- -w:当 ping 不通时，指定发送的每个数据包的超时时间，单位秒
+- -s:指定数据包大小
+
+跟踪数据包的路由途径 `traceroute`命令
+
+
+
+
+
+## 二、设置网络地址参数
+
+### 1、临时修改网络配置
+
+（1）方法一：ifconfig 网络设备 IP地址[/短格式子网掩码]
+
+（2）方法二：ifconfig 网络设备 IP地址[netmask 子网掩码]
+
+
+
+### 2、固定修改网络配置
+
+(1)配置文件: /etc/sysconfig/network-scripts/目录下的 ifcfg-对应网络设备名称,默认第一块网卡为 ens32 或者 ens33
+
+![image-20240112163559608](\img\springBoot\image-20240112163559608.png)
+
+(2) 编辑配置文件: 前面带#表示非必要配置内容
+
+![image-20240112163640352](\img\springBoot\image-20240112163640352.png)
+
+### 3、临时设置网卡子接口方法:
+
+ifconfig 网络设备:子接口名称 IP 地址/短格式子网掩码
+
+
+
+## 三、修改主机名
+
+
+
+### 1、临时修改主机名
+
+```shell
+hostname 新的主机名
+
+bash  #刷新
+```
+
+
+
+### 2、永久修改主机名
+
+编辑/etc/hostname 配置文件，重启后生效 (推荐)
+
+```shell
+vi /etc/hostname 
+```
+
+
+
+## 四、配置路由
+
+### 1、临时配置路由
+
+(1) 临时添加、删除指定网段的路由记录
+
+方法:
+
+```
+route add -net 网段/短格式子网掩码 gw 网关地址
+```
+
+```
+route del -net 网段/短格式子网掩码
+```
+
+(2)临时添加、删除默认网关记录
+方法: 
+
+```
+route add default gw 网关地址
+```
+
+```shell
+route del default gw 网关地址
+```
+
+
+
+### 2、永久配置路由
+
+#### (1) 方法一: 在/etc/rc.local 中添加
+
+/etc/rc.local是系统开机时最后执行的一个 shel1 脚本，可以将命令放到脚本内，实现每次开机执行。
+
+#### (2) 方法二:在/etc/sysconfig/network 中添加到末尾
+
+注意:网卡的配置文件中如果有设置了网关，该文件优先级高于此配置文件
+
+#### (3)方法三:修改/etc/sysconfig/static-routes 配置文件(没有该文件手动建立)
+
+#### (4) 方法四:开启 IP 转发(路由功能)
+
+echo“1”> /proc/sys/net/ipv4/ip _forward (临时开启)
+
+编辑/etc/sysctl.conf 文件将 net.ipv4.ip_forward=0 改为 1(永久开启)
+
+sysctl -p (使sysctl.conf 文件立即生效)
+
+
+
+## 五、设置DNS域名解析
+
+### 1、设置DNS域名解析
+
+(1) 方法一: 编辑/etc/sysconfig/network-scripts/目录下网络设备的配置文件
+
+(2) 方法二: vi编辑/etc/resolv.conf 文件
+
+### 2、城名解析本地主机映射文件
+
+(1) 方法: 编辑/etc/hosts 文件
+(2) 说明: /etc/hosts 文件优先于 DNS 域名解析服务，也就是说，如果一个域名在 hosts文件中已存在映射关系，将不再通过 DNS 服务器进行域名解析。hosts 文件中一个 ip 地址可以对应多个域名或者别名。
+Linux: /etc/hosts
+Windows: C: Windows System32 drivers etc hosts

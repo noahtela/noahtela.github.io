@@ -1,0 +1,81 @@
+---
+layout:     post
+title:      "linux-LVM逻辑卷"
+subtitle:   " \"linux\""
+date:       2023-12-18 14:08:12
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - linux学习
+    - 云原生
+
+---
+
+> “Yeah It's on. ”
+
+
+<p id = "build"></p>
+
+## LVM逻辑卷
+
+
+
+一、LVM逻辑卷管理
+
+注意:
+
+- 逻辑分区和逻辑卷不是一个概念。
+
+普通分区的缺点：
+
+- 问题一：服务的日志存放在/var/log目录下，现在空间不够了怎么办？
+- 问题二：数据库软件安装在/user/local/mysql目录下，现在空间不够了怎么办？
+
+ 1、pv物理卷
+
+物理卷是 LVM机制的基本存储设备，通常对应为一个普通分区或整个硬盘，创建物理卷时，会在分区或硬盘头部创建一个保留区块，用于记录 LVM 的属性，并把存储空间分割成默认大小为 4MB 的基本单元Physical Exent，PE)，而构成物理卷。物理卷一般直接使用设备文件名称。
+
+2、VG卷组
+
+由一个或多个物理卷组成一个整体,即成为卷组,在卷组中可以动态添加或移除物理卷，多个物理卷可以分成不同的卷组，卷组的名称用户自己定义。卷组的大小就是多个物理卷大小的总和。
+
+3、LV逻辑卷
+
+逻辑卷建立在卷组之上，与物理卷没有直接关系，对于逻辑卷来说，每一个卷组就是个整体，从这个整体中分割出一块空间，作为用户创建文件系统的基础，这一小块空间就称为逻辑卷。逻辑卷经过格式化创建了文件系统后，就可以挂载使用了。
+
+整个过程
+
+硬盘--->分区---->物理卷 ---->卷组--->lv逻辑卷--->格式化----挂载使用
+
+
+
+
+
+LVM管理命令
+
+| 功能 | 物理卷管理 | 卷组管理   | 逻辑卷管理 |
+| ---- | ---------- | ---------- | ---------- |
+| 扫描 | pvscan pvs | vgscan vgs | lvscan lvs |
+| 创建 | pvcreate   | vgcreate   | lvcreate   |
+| 显示 | pvdisplay  | vgdisplay  | lvdisplay  |
+| 删除 | pvremove   | vgremove   | lvremove   |
+| 扩展 |            | vgextend   | lvextend   |
+| 减少 |            | vgreduce   | lvreduce   |
+
+
+
+减少基本上用不到
+
+揉碎-->整合-->重分
+
+pvcreate格式:pvcreate 设备1(分区)[设备2 ......]
+
+vgcreate格式;vgcreate 卷组名 物理卷名1 物理卷名2......
+
+lvcreate格式: lvcreate  -L 容量大小 (-l 指定PE个数) -n 逻辑卷名 卷组名
+
+xfs_growfs /dev/myvg/mylv 重新识别大小
+
+xfs文件系统只支持增大分区空间的情况,不支持减小
