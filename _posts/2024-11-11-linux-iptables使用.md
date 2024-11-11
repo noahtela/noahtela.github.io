@@ -41,7 +41,7 @@ tags:
 
 4.防火墙的默认规则是所有规则都匹配完才会匹配的
 
-![image-20241111115826682](D:\blogs\img\linux\image-20241111115826682.png)
+![image-20241111115826682](\img\linux\image-20241111115826682.png)
 
 
 
@@ -64,5 +64,5 @@ tags:
 - PREROUTING 链：用于对即将离开系统的数据包进行NAT操作（如SNAT）。
 - POSTROUTING 链：通常用于DNAT（目标网络地址转换），例如将外部请求重定向到本地服务。
 
-![image-20241111153138832](D:\blogs\img\linux\image-20241111153138832.png)
+![image-20241111153138832](\img\linux\image-20241111153138832.png)
 

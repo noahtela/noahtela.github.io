@@ -109,7 +109,7 @@ cat /nexus-data/admin.password
 
 密码:刚才cat出来的密码
 
-![image-20241105113420108](D:\blogs\img\linux\image-20241105113420108.png)
+![image-20241105113420108](\img\linux\image-20241105113420108.png)
 
 
 
@@ -117,15 +117,15 @@ cat /nexus-data/admin.password
 
 登录完成后，点击左上角设置图标，进入管理页面
 
-![image-20241105114246215](D:\blogs\img\linux\image-20241105114246215.png)
+![image-20241105114246215](\img\linux\image-20241105114246215.png)
 
 点击左侧菜单栏`Repositories`,我们可以看到很多已经配置好的仓库，一般只使用开源jar就够用了，如果需要建立自定义仓库，点击`Create repository`创建新的仓库。
 
-![image-20241105114336431](D:\blogs\img\linux\image-20241105114336431.png)
+![image-20241105114336431](\img\linux\image-20241105114336431.png)
 
 首先我们要创建几个常用的代理源，用于常用开源npm模块的拉取。
 
-![image-20241105114451537](D:\blogs\img\linux\image-20241105114451537.png)
+![image-20241105114451537](\img\linux\image-20241105114451537.png)
 
 
 
@@ -137,19 +137,19 @@ taobao `https://registry.npm.taobao.org/`
 
 npm-npmjs `https://registry.npmjs.org`
 
-![image-20241105114602536](D:\blogs\img\linux\image-20241105114602536.png)
+![image-20241105114602536](\img\linux\image-20241105114602536.png)
 
 创建`npm-hosted` ,用于发布个人开发的npm组件。
 
-![image-20241105114902009](D:\blogs\img\linux\image-20241105114902009.png)
+![image-20241105114902009](\img\linux\image-20241105114902009.png)
 
-![image-20241105115143847](D:\blogs\img\linux\image-20241105115143847.png)
+![image-20241105115143847](\img\linux\image-20241105115143847.png)
 
 创建`npm-public` ,用于把几个仓库组组合在一起公开连接使用。
 
-![image-20241105115236981](D:\blogs\img\linux\image-20241105115236981.png)
+![image-20241105115236981](\img\linux\image-20241105115236981.png)
 
-![image-20241105115453197](D:\blogs\img\linux\image-20241105115453197.png)
+![image-20241105115453197](\img\linux\image-20241105115453197.png)
 
 说明:
 
