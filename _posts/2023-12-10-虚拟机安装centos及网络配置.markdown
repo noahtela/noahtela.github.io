@@ -237,4 +237,13 @@ systemctl restart network
 
 
 
-就可以正常上网啦
+就可以正常上网啦，**如果还不能上网，仔细看一下网卡配置的注释**
+
+
+
+在使用yum安装软件时，因为centos7的官方镜像库已经不再支撑，所以要替换阿里云的源
+
+```
+curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+```
+
