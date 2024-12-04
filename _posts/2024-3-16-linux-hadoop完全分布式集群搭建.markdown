@@ -34,9 +34,9 @@ tags:
 
 系统镜像：`https://www.123pan.com/s/gIBcVv-2BVN3.html提取码:p8Ai`
 
-JDK安装包：
+JDK安装包：`https://www.123865.com/s/gIBcVv-lETO3`提取码:YwCN
 
-Hadoop安装包：
+Hadoop安装包：`https://www.123865.com/s/gIBcVv-7ETO3`提取码:WkCk
 
 实验说明：本实验用到三台机器，两台从服务器，一台主服务器，**只需要把三台机器配置好免密登录即可运行接下来的脚本**
 
