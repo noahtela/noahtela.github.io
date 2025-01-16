@@ -108,7 +108,7 @@ source /etc/profile #重载环境变量
 echo "jdk安装完成"
 ```
 
-![image-20240425083236432](C:\blog\img\springBoot\image-20240425083236432.png)
+![image-20240425083236432](\img\springBoot\image-20240425083236432.png)
 
 
 
@@ -124,7 +124,7 @@ Jenkins安装方式一：war包
 
 ### 3、Jenkins安装方式二：rpm方式（推荐）
 
-![image-20240425085801844](C:\blog\img\springBoot\image-20240425085801844.png)
+![image-20240425085801844](\img\springBoot\image-20240425085801844.png)
 
 ```shell
 rpm -ivh jenkins-2.164.1-1.1.noarch.rpm
@@ -142,14 +142,14 @@ rpm -ivh jenkins-2.164.1-1.1.noarch.rpm
 vi /etc/init.d/jenkins
 ```
 
-![image-20240425092248321](C:\blog\img\springBoot\image-20240425092248321.png)
+![image-20240425092248321](\img\springBoot\image-20240425092248321.png)
 
 ```
 systemctl daemon-reload
 systemctl start jenkins
 ```
 
-![image-20240425092713197](C:\blog\img\springBoot\image-20240425092713197.png)
+![image-20240425092713197](\img\springBoot\image-20240425092713197.png)
 
 ```shell
 [root@jenkins ~]# rpm -ql jenkins
@@ -190,7 +190,7 @@ JENKINS_ARGS=""
 
 浏览器访问测试
 
-![image-20240425092858354](C:\blog\img\springBoot\image-20240425092858354.png)
+![image-20240425092858354](\img\springBoot\image-20240425092858354.png)
 
 获取密码
 
@@ -204,7 +204,7 @@ cat /var/lib/jenkins/secrets/initialAdminPassword
 
 **来到这个页面后，不要着急点**
 
-![image-20240425101014311](C:\blog\img\springBoot\image-20240425101014311.png)
+![image-20240425101014311](\img\springBoot\image-20240425101014311.png)
 
 
 
@@ -215,7 +215,7 @@ cd /var/lib/jenkins/updates
 sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins/g' default.json && sed -i 's/http:\/\/www.google.com/https:\/\/www.baidu.com/g' default.json
 ```
 
-![image-20240425101223570](C:\blog\img\springBoot\image-20240425101223570.png)
+![image-20240425101223570](\img\springBoot\image-20240425101223570.png)
 
 
 
