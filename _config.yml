@@ -4,7 +4,7 @@ SEOTitle: Xavier的博客 | Xavier Blog
 header-img: img/home-bg.jpg
 email: Noah074523@gmail.com
 description: "这里是 Xavier的个人博客，与你一起发现更大的世界 | 要做一个有 swag 的程序员"
-keyword: "博客, 个人网站, 互联网, Web, JavaScript, React, docker, 后端, Next.js"
+keyword: "博客,渗透 , K8s, Docker, Linux, Java, vue"
 url: "https://blogs.830sir.top" # your host, for absolute URL
 baseurl: "" # for example, '/blog' if your blog hosted on 'host/blog'
 
@@ -74,7 +74,7 @@ ga_domain: huangxuan.me
 
 # Sidebar settings
 sidebar: true # whether or not using Sidebar.
-sidebar-about-description: "要做一个有梦想的程序员 <br>@ YangSir"
+sidebar-about-description: "一个被Java耽误的运维牛马 <br>@ YangSir"
 # sidebar-avatar: https://github.com/Huxpro.png # use absolute URL, seeing it's used in both `/` and `/about/`
 
 # Featured Tags
@@ -91,6 +91,5 @@ page-mathjax: false
 # Friends
 friends:
   [
-    { title: "易优评-卿云官网", href: "http://qy.830sir.top/" },
-    { title: "卿云-AI问答", href: "http://chat.qingyunzc.cc" }
+    { title: "卿云-AI问答(个人毕设)", href: "http://ai.830sir.top" }
   ]

@@ -46,7 +46,7 @@ tags:
 
 ### 注意
 
-**Startup Probe只会在容器启动时执行一次**，与Liveness Probe和Readiness Probe不同,Startup Probe的目的是为了应对启动时间较长的容器,给予容器一个合理的启动宽限期,避免在启动过程中被判定为失败而被杀掉。
+**Startup Probe只会在容器启动初运行**，与Liveness Probe和Readiness Probe不同,Startup Probe的目的是为了应对启动时间较长的容器,给予容器一个合理的启动宽限期,避免在启动过程中被判定为失败而被杀掉。
 
 Startup Probe的工作流程如下:
 
