@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "linux软件-Redis"
+title:      "linux软件-Redis(一)"
 subtitle:   " \"linux\""
 date:       2025-2-28 16:28:12
 author:     "yangsir"
@@ -14,7 +14,7 @@ tags:
 
 ---
 
-> “Yeah It's on. ”
+> “本节主要介绍 Redis的基本内容”
 
 
 <p id = "build"></p>
