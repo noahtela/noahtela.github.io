@@ -25,6 +25,8 @@ tags:
 
 （Redis官网地址 https://redis.io）
 
+本文中涉及到的软件：链接`https://pan.baidu.com/s/1_QIbVqE-p_gkkuXTcJiUSA?pwd=d1tu`  提取码: `d1tu` 
+
 ![image-20250228142114530](\img\linux\image-20250228142114530.png)
 
 ## 安装Redis
