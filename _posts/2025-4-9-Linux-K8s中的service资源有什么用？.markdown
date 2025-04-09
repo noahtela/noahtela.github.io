@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "K8s-Service服务有什么作用？"
-subtitle:   " \"Go\""
+subtitle:   " \"k8s\""
 date:       2025-4-9 11:28:12
 author:     "yangsir"
 header-img: "img/bg-material.jpg"
