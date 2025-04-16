@@ -36,7 +36,7 @@ tags:
 
 由于目前社区中有使用 Docker 部署 iRedMail 的尝试（例如 GitHub 上的一些项目），这里采用常见的基于 Docker Compose 的方式进行部署。
 
-1.创建工作目录及数据卷目录
+### 1.创建工作目录及数据卷目录
 
 建议在宿主机上为 iRedMail 相关数据单独建立目录，以便持久化存储数据、配置和日志：
 
@@ -45,7 +45,7 @@ mkdir -p /data/iredmail/{conf,data,logs}
 chown -R $(whoami):$(whoami) /data/iredmail
 ```
 
-2.编辑配置文件
+### 2.编辑配置文件
 
 ```shell
 # 进入工作目录（例如 /data/iredmail/conf）
@@ -70,7 +70,7 @@ MLMMJADMIN_API_TOKEN=$(openssl rand -base64 32)
 ROUNDCUBE_DES_KEY=$(openssl rand -base64 24)
 ```
 
-3.编写 docker-compose.yml 文件
+### 3.编写 docker-compose.yml 文件
 
 在工作目录中创建 `docker-compose.yml` 文件，内容示例如下：
 
