@@ -1,5 +1,5 @@
 ---
-  layout:     post
+ layout:     post
 title:      "linux-系统进程与计划任务管理"
 subtitle:   " \"linux\""
 date:       2023-12-24 14:28:12
@@ -37,9 +37,13 @@ tags:
 
 ![image-20231224110243458](\img\springBoot\image-20231224110243458.png)
 
-- 问：ps aux先执行，那为什么ps aux | grep ping的结果会查到grep ping进程？
+```
+问：ps aux先执行，那为什么ps aux | grep ping的结果会查到grep ping进程？
 
-- 答：当你执行 `ps aux | grep ping` 命令时，实际上是先执行 `ps aux` 命令，然后再执行 `grep ping` 命令。但是，`ps aux` 命令和 `grep ping` 命令并不是严格的顺序执行。当你在命令行输入 `ps aux | grep ping` 命令后，shell 会先创建一个管道，然后同时 fork 出两个子进程，一个子进程执行 `ps aux` 命令，另一个子进程执行 `grep ping` 命令，并且这两个命令是几乎同时开始执行的。因此，`grep ping` 进程在 `ps aux` 命令执行完毕时可能仍然存在，所以 `ps aux` 命令的输出结果中会包含 `grep ping` 进程。
+答：当你执行 ps aux | grep ping 命令时，实际上是先执行 ps aux命令，然后再执行 grep ping 命令。但是，ps aux 命令和 grep ping 命令并不是严格的顺序执行。当你在命令行输入 ps aux | grep ping 命令后，shell 会先创建一个管道，然后同时 fork 出两个子进程，一个子进程执行 ps aux 命令，另一个子进程执行 grep ping 命令，并且这两个命令是几乎同时开始执行的。因此，grep ping 进程在 ps aux 命令执行完毕时可能仍然存在，所以 ps aux 命令的输出结果中会包含 grep ping 进程。
+```
+
+
 
 ## ps命令
 

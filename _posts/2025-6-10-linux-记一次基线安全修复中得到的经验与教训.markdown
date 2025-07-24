@@ -1,0 +1,281 @@
+---
+layout:     post
+title:      "Linux-记一次基线安全修复中得到的经验与教训"
+subtitle:   " \"linux\""
+date:       2025-6-10 16:25:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - Linux
+    - 云原生
+
+
+
+---
+
+> “记一次基线安全修复中得到的经验与教训”
+
+
+<p id = "build"></p>
+
+近几天接到一个基线安全整改的工作，同时这也是常见的主机安全问题，收获颇多
+
+# 常见的主机安全问题
+
+涉及到的基线安全问题:
+
+- 检查是否存在未授权的SUID/SGID文件
+- 检查是否禁止ctrl+alt+del
+- 确保配置了密码失败尝试锁定
+- 检查是否可以对日志大小进行配置
+- 检查是否开启命令及登录失败记录
+- SSH安全检查-禁止SSH Agent转发
+- 检查是否可以对日志数量进行配置
+- 检查口令重复次数限制要求
+- 检查是否限制root远程登录
+- 检查是否设置重复登录失败后锁定时间限制
+- 检查登录提示-是否设置登录成功后警告Banner
+
+## 1.检查是否存在未授权的SUID/SGID文件
+
+- 检查内容：去掉所有文件“系统文件”属性，防止用户滥用及提升权限的可能性。
+
+- 知识点：
+
+  文件的s权限是什么？
+
+  在 Linux 中，`s` 权限（Setuid 和 Setgid）是两种特殊权限位，用于临时提升执行权限：
+
+  - A. Setuid (s 出现在用户权限位)
+
+    - **作用**：当用户执行该文件时，进程会以**文件所有者**的身份运行（而不是执行者的身份）
+
+    - **位置**：用户权限位的执行位置（如 `-rwsr-xr-x`）
+
+    - **典型应用**：
+
+      ```shell
+      -rwsr-xr-x 1 root root /usr/bin/passwd
+      ```
+
+      普通用户执行 `passwd` 命令时，会临时获得 root 权限（因为需要修改 `/etc/shadow` 文件）
+
+  - B. Setgid (s 出现在组权限位)
+
+    - **作用**：
+
+      - 对**文件**：执行时进程会以**文件所属组**的身份运行
+      - 对**目录**：在该目录下创建的新文件会**继承目录的所属组**
+
+    - **位置**：组权限位的执行位置（如 `-rwxr-sr-x`）
+
+    - **典型应用**：
+
+      ```shell
+      drwxr-s--- 2 project team /shared_dir
+      ```
+
+      团队成员在 `/shared_dir` 创建文件时，文件自动属于 `team` 组（而非用户的主组）
+
+  - C. 大小写 s 的区别
+
+    | 符号     | 含义                                                 |
+    | :------- | :--------------------------------------------------- |
+    | 小写 `s` | 同时设置了执行权限（x）和 setuid/setgid              |
+    | 大写 `S` | 设置了 setuid/setgid，但**没有执行权限**（无效状态） |
+
+- 修复建议：
+
+  - 执行chmod a-s file_name去掉SUID
+  - 执行chmod g-s file_name去掉GUID
+
+## 2.检查是否禁止ctrl+alt+del
+
+- 检查内容：禁止ctrl+alt+del，防止非法重新启动服务器。
+
+- 知识点：简单易见，防止非法重启服务器
+
+- 修复建议：
+
+  ```shell
+  vi /etc/systemd/system.conf
+  #修改或添加以下内容
+  CtrlAltDelBurstAction=none
+  ```
+
+  
+
+## 3.确保配置了密码失败尝试锁定
+
+- 检查内容：对于采用静态口令认证技术的设备，应配置当用户连续认证失败次数超过6次（不含6次），锁定该用户使用的账号。
+
+- 修复建议：
+
+  ```shell
+  vi /etc/security/faillock.conf
+  #修改或添加以下内容
+  deny = 5
+  unlock_time = 900
+  even_deny_root
+  root_unlock_time = 60
+  ```
+
+
+
+
+## 4.检查是否可以对日志大小进行配置
+
+- 检查内容：应通过配置对日志文件的大小进行限制，避免过大的日志文件
+
+- 修复建议：
+
+  ```
+  1、/etc/logrotate.conf作为全局性配置 size 10M
+  2、/etc/logrotate.d/下的子配置文件确保不配置或者配置size 10M即可。
+  3、如果/etc/logrotate.conf未配置size，则/etc/logrotate.d/下的子配置文件均需满足size 10M才合规。
+  ```
+
+  
+
+## 5.检查是否开启命令及登录失败记录
+
+- 检查内容：检查是否记录账户登录日志
+
+- 修复建议：
+
+  ```
+  检查文件/etc/login.defs中如下配置项是否设置为yes并未被注释：LASTLOG_ENAB、FAILLOG_ENAB
+  ```
+
+  
+
+## 6.SSH安全检查-禁止SSH Agent转发
+
+- 检查内容：禁止SSH Agent转发
+
+- 修复建议：
+
+  ```shell
+  1、执行下面命令检查ssh的AllowAgentForwarding版本信息；
+  sudo sshd -T|grep -i AllowAgentForwarding
+  2、回显值为yes，则需要修改:
+  (1)、修改前备份配置文件：
+  cp -p /etc/ssh/sshd_config{,_bak}
+  (2)、修改配置文件/etc/ssh/sshd_config ,确保AllowAgentForwarding no配置正确
+  vi /etc/ssh/sshd_config 
+  AllowAgentForwarding no
+  3、重启sshd服务
+  ```
+
+- ### **SSH Agent转发的作用**:
+
+  当启用Agent转发（`AllowAgentForwarding yes`）时，用户可以通过中间服务器（跳板机）将本地的SSH密钥认证请求**透明转发**到原始客户端的SSH Agent，从而无需在中间服务器上存储私钥即可访问下游服务器。例如：
+
+  1. 本地机器A → 跳板机B（启用Agent转发） → 目标服务器C
+     - 访问C时，B会借用A的SSH Agent进行认证，B本身不持有私钥。
+
+- #### **安全风险**：
+
+  - **Agent劫持风险**：如果攻击者能控制跳板机（B），他们可能通过SSH Agent套接字（如`/tmp/ssh-*`）冒充用户访问所有已加载到Agent的密钥，即使密钥本身受密码保护。
+    - 典型攻击方式：通过`SSH_AUTH_SOCK`环境变量窃取Agent连接。
+  - **信任链延长**：跳板机的安全性直接影响整个链的安全。若跳板机被入侵，所有通过它转发的连接均可能暴露。
+  - **密钥滥用**：攻击者可利用转发的Agent访问该密钥授权的所有服务器（如GitHub、生产服务器等）。
+
+## 7.检查是否可以对日志数量进行配置
+
+- 检查内容：应通过配置对日志文件的数量进行限制，避免磁盘空间不足
+
+- 修复建议：
+
+  ```shell
+  检查：
+  awk '{ 
+  >  if (FILENAME != prev_filename) { 
+  >  print "File: " FILENAME; 
+  >  prev_filename = FILENAME; 
+  >  } 
+  > } 
+  > /^ *rotate/ { 
+  >  if($2<=3){ 
+  >  print $0,"check result=true"; 
+  >  } else { 
+  >  print $0,"check result=false"; 
+  > }}' /etc/logrotate.conf $(cat /etc/logrotate.conf |awk '/^include/{print $2}')/* 
+  
+  加固建议：
+  将/etc/logrotate.d下面的所有配置文件的rotate都改为3
+  ```
+
+  
+
+## 8.检查口令重复次数限制要求
+
+- 检查内容：对于采用静态口令认证技术的设备，应配置设备，使用户不能重复使用最近5次（含5次）内已使用的口令。
+
+- 修复建议：
+
+  ```shell
+  1、配置前进行文件备份
+  cp -p /etc/pam.d/system-auth{,_bak}
+  cp -p /etc/pam.d/password-auth{,_bak}
+  2、将如下配置插入到/etc/pam.d/system-auth和/etc/pam.d/password-auth中
+  password    sufficient    pam_unix.so 行的上一行位置，如下：
+  
+  password	requisite	pam_pwhistory.so try_first_pass local_users_only enforce_for_root retry=3 remember=5
+  password	sufficient	pam_unix.so sha512 shadow try_first_pass use_authtok remember=5
+  ```
+
+## 
+
+## 9.检查是否限制root远程登录
+
+- 检查内容：限制具备超级管理员权限的用户远程登录。远程执行管理员权限操作，应先以普通权限用户远程登录后，再切换到超级管理员权限账号后执行相应操作。
+
+- 修复建议：
+
+  ```shell
+  1、修改配置：
+  cp -p /etc/ssh/sshd_config /etc/ssh/sshd_config_bak 
+  vi /etc/ssh/sshd_config
+  PermitRootLogin no
+  2、重启服务：
+  非systemd管理下：service sshd restart
+  systemd管理下：systemctl restart sshd
+  ```
+
+- 安全风险：
+
+  1. **暴力破解攻击**
+     - root账户是默认的最高权限用户，攻击者常针对其进行暴力破解（不断尝试密码）。若允许远程登录且密码强度不足，系统极易被入侵。
+     - **典型现象**：系统日志（`/var/log/auth.log`或`/var/log/secure`）中出现大量失败登录尝试。
+  2. **权限滥用**
+     - 一旦root账户泄露，攻击者可完全控制系统，包括：
+       - 删除或加密所有数据（勒索软件）。
+       - 植入后门、木马。
+       - 横向渗透内网其他设备。
+  3. **审计困难**
+     - 多人共享root账户时，无法通过日志区分具体操作者，违背最小权限原则。
+  4. **依赖密码强度**
+     - 若仅依赖密码认证，弱密码会导致系统脆弱。即使使用强密码，也无法防御中间人攻击（若未启用SSH密钥+加密）。
+
+
+
+## 10.检查是否设置重复登录失败后锁定时间限制
+
+- 检查内容：可以设置重复登录失败后锁定的时间限制，如锁定连续五次登录失败的用户（包括root），15分钟（900秒）后自动解锁。
+
+- 修复建议：
+
+  ```shell
+  1、配置前备份相关文件；
+  cp -p  /etc/security/faillock.conf /etc/security/faillock.conf_bak
+  2、添加以下命令行到 /etc/security/faillock.conf文件中的对应区段：
+  vi /etc/security/faillock.conf
+  deny = 5
+  unlock_time = 900
+  even_deny_root
+  ```
+
+  

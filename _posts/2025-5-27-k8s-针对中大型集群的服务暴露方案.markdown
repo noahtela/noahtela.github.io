@@ -1,0 +1,70 @@
+---
+layout:     post
+title:      "k8s-针对中大型集群的服务暴露方案"
+subtitle:   " \"linux\""
+date:       2025-5-27 16:48:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “针对中大型集群的服务暴露方案”
+
+
+<p id = "build"></p>
+
+# 针对中大型集群的服务暴露方案
+
+​		
+
+## 首先：常见对外服务暴露方案
+
+| 方案                                                 | 特点                                                   | 适用场景                            |
+| ---------------------------------------------------- | ------------------------------------------------------ | ----------------------------------- |
+| **NodePort**                                         | 简单粗暴，集群每个节点开放一个端口映射到 Pod           | 测试环境、小规模集群                |
+| **LoadBalancer**                                     | 借助云厂商的 LB，自动配置公网访问                      | 云原生环境，适用于中小流量服务      |
+| **Ingress Controller**（+ Ingress 资源）             | 7层路由，可做域名/路径转发，支持 TLS、安全策略、限流等 | 中大型服务网关场景，适用于 Web 应用 |
+| **Gateway API**（未来趋势）                          | 下一代 Ingress，支持更丰富的路由、角色分离、跨命名空间 | 想用更细粒度控制的服务暴露策略      |
+| **Service Mesh Ingress Gateway**（如 Istio Gateway） | 深度集成服务网格，支持 mTLS、流量镜像、灰度发布        | 高安全、复杂流量治理需求场景        |
+| **自建边缘网关（如 NGINX、Envoy、HAProxy）**         | 灵活可控、可结合多集群统一入口                         | 企业定制需求或混合云环境            |
+| **Multi-Cluster Gateway / Global Load Balancer**     | 多集群统一出入口，如 GSLB + ServiceExport + DNS        | 多集群高可用，对公网的统一访问地址  |
+
+## 选择建议
+
+| 需求                     | 推荐方案                                           |
+| ------------------------ | -------------------------------------------------- |
+| 单集群，中等流量         | LoadBalancer + Ingress Controller                  |
+| 单集群，高流量，服务治理 | Istio Gateway + Gateway API                        |
+| 多集群，需要统一入口     | Global Load Balancer + DNS 或 Istio Multi-Cluster  |
+| 云原生环境               | Gateway API + 云厂商 Ingress（如 AWS ALB Ingress） |
+| 高安全、合规要求         | Istio + mTLS + WAF（Web Application Firewall）     |
+
+
+
+## 一、LoadBalancer + Ingress Controller
+
+概念
+
+- **LoadBalancer Service**：Kubernetes 的一种 Service 类型，会在支持的环境（如云平台）下自动申请一个公网负载均衡器（如 AWS ELB、阿里云 SLB）。
+- **Ingress Controller**：是运行在集群内的控制器（通常是 Pod），监听 Ingress 资源并动态配置路由规则。
+- **Ingress 资源**：用户定义的规则对象，描述“请求应该怎么根据 Host、Path 路由到哪一个 Service”。
+
+架构组成与请求路径
+
+```
+[客户端]
+    ↓（HTTP/S 请求）
+[公网 Load Balancer]
+    ↓（转发）
+[Ingress Controller Pod（如 NGINX）]
+    ↓（根据 Ingress 规则匹配 Host/Path）
+[K8s Service → Pod]
+```
+

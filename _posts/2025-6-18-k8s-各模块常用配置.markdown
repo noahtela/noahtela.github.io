@@ -1,0 +1,312 @@
+---
+layout:     post
+title:      "k8s-各模块常用配置"
+subtitle:   " \"linux\""
+date:       2025-6-18 16:48:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 云原生
+
+
+
+---
+
+> “各模块常用配置”
+
+
+<p id = "build"></p>
+
+# 各模块常用配置
+
+​		
+
+## 一、yaml配置文件几大部分
+
+```yaml
+apiVersion:  #标识资源使用的 Kubernetes API 组和版本，不同资源类型对应不同版本。
+kind:        #明确资源的类型，如工作负载、服务、存储等。
+metadata:    #定义资源的基本标识和属性，用于唯一识别和分类资源。
+spec:        #定义资源的期望状态，不同资源类型的spec字段差异较大。
+```
+
+
+
+## 二、apiVersion:
+
+| 资源类型                 | 推荐 apiVersion              | 适用 K8s 版本    |
+| ------------------------ | ---------------------------- | ---------------- |
+| Pod                      | v1                           | 所有版本         |
+| Service                  | v1                           | 所有版本         |
+| Deployment               | apps/v1                      | 1.9+             |
+| StatefulSet              | apps/v1                      | 1.9+             |
+| DaemonSet                | apps/v1                      | 1.9+             |
+| Ingress                  | networking.k8s.io/v1         | 1.19+            |
+| Job/CronJob              | batch/v1                     | 1.21+（CronJob） |
+| StorageClass             | storage.k8s.io/v1            | 1.7+             |
+| NetworkPolicy            | networking.k8s.io/v1         | 1.8+             |
+| Role/RoleBinding         | rbac.authorization.k8s.io/v1 | 1.8+             |
+| CustomResourceDefinition | apiextensions.k8s.io/v1      | 1.16+            |
+
+使用时建议参考官方文档或通过`kubectl explain <资源类型>`查看最新支持的字段和版本。
+
+
+
+## 三、kind:
+
+- 常见类型：
+  - **工作负载类**：`Pod`、`Deployment`、`StatefulSet`、`DaemonSet`、`Job`、`CronJob`。
+  - **服务发现类**：`Service`、`Ingress`。
+  - **配置类**：`ConfigMap`、`Secret`。
+  - **存储类**：`PersistentVolume（PV）`、`PersistentVolumeClaim（PVC）`、`StorageClass`。
+  - **集群资源类**：`Namespace`、`Role`、`ClusterRole`、`ServiceAccount`。
+
+
+
+
+
+## 四、metadata:
+
+- 常用字段
+  1. **name**：资源名称，在命名空间内唯一（如`name: my-app`）。
+  2. **namespace**：资源所属命名空间，默认在`default`命名空间（如`namespace: dev`）。
+  3. **labels**：键值对标签，用于筛选和关联资源（如`labels: app: my-app`）。
+  4. **annotations**：附加元数据，存储非标识性信息（如`annotations: description: "生产环境应用"`）。
+  5. **uid/creationTimestamp**：由 K8s 自动生成，分别表示资源唯一 ID 和创建时间。
+
+```yaml
+metadata:
+  name: my-deployment
+  namespace: app-namespace
+  labels:
+    app: my-app
+    tier: frontend
+  annotations:
+    description: "前端服务部署"
+```
+
+
+
+## 五、spec:
+
+ 前几项都比较简单，在spec这一项，是定义资源的期望状态，不同资源类型的spec字段差异较大。
+
+
+
+### 1.Deployment
+
+#### A.部署策略与副本管理
+
+```yaml
+spec:
+  progressDeadlineSeconds: 600  # 部署超时时间（10分钟）
+  replicas: 2                   # 维持2个Pod副本
+  revisionHistoryLimit: 10      # 保留10个历史版本（用于回滚）
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%             # 滚动更新时最多允许1.25倍副本数（2→3）
+      maxUnavailable: 25%       # 滚动更新时最多允许25%副本不可用（2→1）
+    type: RollingUpdate         # 采用滚动更新策略
+```
+
+#### B.Pod 模板与标签
+
+```yaml
+template:
+  metadata:
+    labels:
+      cd.application/name: test-base  # 标签用于Selector匹配
+```
+
+#### C.容器配置
+
+```yaml
+containers:
+- image:  #镜像地址
+  imagePullPolicy: IfNotPresent  # 优先使用本地镜像，不存在则拉取
+  name: pct-base
+  ports:
+  - containerPort: 8080          # 容器监听端口
+    protocol: TCP
+```
+
+#### D.资源请求与限制
+
+```yaml
+resources:
+  requests:
+    cpu: "1"        # 请求1个CPU核心
+    memory: "2Gi"   # 请求2GB内存
+  limits:
+    cpu: "8"        # 限制8个CPU核心
+    memory: "8Gi"   # 限制8GB内存
+```
+
+#### E.配置挂载与依赖
+
+```yaml
+volumeMounts:
+  - mountPath: /home/app/conf
+    name: nacos-configmap
+volumes:
+- configMap:
+    defaultMode: 511  # 权限设置为-r-xr-xr-x
+    name: nacos-configmap #引用configmap
+  name: nacos-configmap 
+```
+
+#### F. 其他关键设置
+
+```yaml
+imagePullSecrets:
+- name: devops-pct-imagePullSecret  # 私有镜像仓库认证
+terminationGracePeriodSeconds: 30   # 优雅终止超时时间（默认30秒）
+```
+
+### 2.configmap
+
+configmap不叫spec:，而是date:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-configmap  # 必选：ConfigMap名称
+  namespace: default  # 可选：命名空间，默认default
+  labels:             # 可选：标签，用于分类和选择
+    app: my-app
+  annotations:        # 可选：注解，存储额外元数据
+    description: "应用配置"
+data:                 # 必选：配置数据（键值对）
+  key1: value1        # 简单值
+  key2: |             # 多行文本（如配置文件内容）
+    line1
+    line2
+binaryData:           # 可选：二进制数据（Base64编码）
+  key3: YWJjZGVmZw==  # 示例："abcdefg"的Base64编码
+```
+
+
+
+### 3.Service
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service  # 服务名称（DNS域名的一部分）
+spec:
+  type: ClusterIP   # 服务类型（ClusterIP/NodePort/LoadBalancer/ExternalName）
+  selector:         # 标签选择器，关联后端Pod
+    app: my-app
+  ports:            # 端口映射配置
+  - name: http      # 端口名称（可选）
+    port: 80        # 服务端口（集群内访问）
+    targetPort: 8080  # Pod端口（容器监听端口）
+    protocol: TCP   # 协议（TCP/UDP/SCTP）
+    nodePort: 30080  # NodePort类型时需指定（30000-32767）
+  sessionAffinity: ClientIP  # 会话亲和性（可选）
+  externalTrafficPolicy: Local  # 外部流量策略（可选）
+  loadBalancerIP: 192.0.2.1  # LoadBalancer类型时指定公网IP（可选）
+```
+
+- `selector`：标签选择器，通过标签匹配后端 Pod，实现流量转发。
+
+- `ports`：端口映射，`port`：服务端口（集群内访问），`targetPort`：Pod 端口（容器监听端口），`nodePort`：NodePort 类型时的节点端口（范围 30000-32767），`protocol`：协议类型（TCP/UDP/SCTP）。
+
+- `sessionAffinity`：会话亲和性，确保同一客户端的请求始终路由到同一 Pod。
+
+- `loadBalancerSourceRanges`：访问控制，限制 LoadBalancer 类型服务的客户端 IP 范围。
+
+  ```
+  loadBalancerSourceRanges:
+  - 192.168.1.0/24  # 仅允许该网段访问
+  - 10.0.0.0/8
+  ```
+
+### 4.StorageClass
+
+![image-20250618114444536](\img\linux\image-20250618114444536.png)
+
+- `provisioner`：存储插件
+
+  - 常见值
+
+    - **公有云**：
+
+      ```yaml
+      provisioner: kubernetes.io/aws-ebs  # AWS EBS
+      provisioner: kubernetes.io/gce-pd   # GCP Persistent Disk
+      provisioner: kubernetes.io/azure-disk  # Azure Disk
+      ```
+
+    - **开源存储**：
+
+      ```yaml
+      provisioner: cephfs.csi.ceph.com    # Ceph CSI
+      provisioner: nfs.csi.k8s.io         # NFS CSI
+      provisioner: rancher.io/local-path  # 本地路径
+      ```
+
+    - **自建存储：**
+
+      ```yaml
+      provisioner: kubernetes.io/glusterfs  # GlusterFS
+      provisioner: kubernetes.io/rbd        # Ceph RBD
+      ```
+
+- `parameters`：存储参数
+
+  - **示例（AWS EBS）**：
+
+    ```yaml
+    parameters:
+      type: gp2           # 存储类型（gp2=通用SSD，io1=高性能SSD）
+      iopsPerGB: "10"     # IOPS/GB（仅适用于io1类型）
+      encrypted: "true"   # 是否加密
+      kmsKeyId: aws-kms-key-id  # KMS密钥ID
+    ```
+
+  - **示例（Ceph CSI）**：
+
+    ```yaml
+    parameters:
+      monitors: 192.168.1.1:6789,192.168.1.2:6789  # Ceph监视器地址
+      pool: kube RBD池名称
+      csi.storage.k8s.io/provisioner-secret-name: ceph-secret  # 认证密钥
+      csi.storage.k8s.io/provisioner-secret-namespace: kube-system
+    ```
+
+- `reclaimPolicy`：回收策略，当 PersistentVolumeClaim（PVC）被删除时，如何处理底层存储。
+
+  - **可选值**：
+
+    - `Delete`（默认）：删除 PV 和底层存储。
+
+    - `Retain`：保留 PV 和存储，需手动清理。
+
+    - `Recycle`：已弃用，使用`Delete`替代。
+
+      
+
+- `volumeBindingMode`：卷绑定模式
+
+  - **可选值**：
+    - `Immediate`（默认）：创建 PVC 时立即绑定 PV。
+    - `WaitForFirstConsumer`：等待 Pod 调度后再绑定（支持节点亲和性）。
+
+- `allowVolumeExpansion`：允许扩容
+
+  - **作用**：是否允许通过修改 PVC 扩容存储。
+
+  - **示例**：
+
+    ```yaml
+    allowVolumeExpansion: true  # 启用存储扩容（需存储插件支持）
+    ```
+
+
+

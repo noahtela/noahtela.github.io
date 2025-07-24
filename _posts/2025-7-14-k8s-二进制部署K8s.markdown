@@ -1,0 +1,258 @@
+---
+layout:     post
+title:      "k8s-二进制部署K8s"
+subtitle:   " \"K8s\""
+date:       2025-6-18 16:48:49
+author:     "yangsir"
+header-img: "img/bg-material.jpg"
+catalog: true
+tags:
+    - 笔记
+    - k8s
+    - 二进制部署
+
+
+
+---
+
+> “二进制部署”
+
+
+<p id = "build"></p>
+
+# 二进制部署K8s
+
+
+
+
+
+环境：centos7、kubernetes1.20
+
+| IP             | 主机名  |
+| -------------- | ------- |
+| 192.168.13.141 | master1 |
+| 192.168.13.142 | master2 |
+| 192.168.13.143 | master3 |
+| 192.168.13.144 | node1   |
+
+![image-20250714142205683](D:\blogs\img\linux\image-20250714142205683.png)
+
+
+
+## 一、环境准备
+
+### 1.1主机初始化配置
+
+**所有主机**配置禁用防火墙和selinux 
+
+```shell
+[root@localhost ~]# yum update -y 
+[root@localhost ~]# setenforce 0
+[root@localhost ~]# iptables -F
+[root@localhost ~]# systemctl stop firewalld
+[root@localhost ~]# systemctl disable firewalld
+[root@localhost ~]# systemctl stop NetworkManager
+[root@localhost ~]# systemctl disable NetworkManager
+[root@localhost ~]# sed -i '/^SELINUX=/s/enforcing/disabled/' /etc/selinux/config
+```
+
+配置主机名并绑定hosts，不同主机名称不同
+
+```shell
+在192.168.13.141上执行如下：
+hostnamectl set-hostname master1 && bash 
+在192.168.13.142上执行如下：
+hostnamectl set-hostname master2 && bash
+在192.168.13.143上执行如下：
+hostnamectl set-hostname master3 && bash
+在192.168.13.144上执行如下：
+hostnamectl set-hostname node1 && bash
+所有主机执行以下命令
+[root@master1 ~]# cat << EOF >> /etc/hosts
+192.168.13.141 master1
+192.168.13.142 master2
+192.168.13.143 master3
+192.168.13.144 node1
+EOF
+```
+
+配置主机之间无密码登录(只需在master1上执行)
+
+```
+yum install -y expect
+ssh-keygen -t rsa -P "" -f /root/.ssh/id_rsa
+#注意密码更换
+export mypass=123456
+name=(master1 master2 master3 node1)
+for i in ${name[@]};do
+expect -c "
+spawn ssh-copy-id -i /root/.ssh/id_rsa.pub root@$i
+  expect {
+    \"*yes/no*\" {send \"yes\r\"; exp_continue}
+    \"*password*\" {send \"$mypass\r\"; exp_continue}
+    \"*Password*\" {send \"$mypass\r\";}
+  }"
+done
+#连接测试
+```
+
+配置时间同步(所有节点)
+
+```shell
+#安装ntpdate命令
+[root@master1 ~]# yum install ntpdate -y
+#跟网络时间做同步
+[root@master1 ~]# ntpdate cn.pool.ntp.org
+#把时间同步做成计划任务
+[root@master1 ~]# crontab -e
+* */1 * * * /usr/sbin/ntpdate   cn.pool.ntp.org
+#重启crond服务
+[root@master1 ~]#service crond restart
+```
+
+修改机器内核参数(所有节点)
+
+```shell
+[root@master1 ~]# swapoff -a
+[root@master1 ~]# modprobe br_netfilter  ##加载内核模块
+[root@master1 ~]# cat > /etc/sysctl.d/k8s.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+[root@master1 ~]# sysctl -p /etc/sysctl.d/k8s.conf
+```
+
+### 1.2部署docker环境(所有节点)
+
+四台主机上分别部署 Docker 环境，因为 Kubernetes 对容器的编排需要 Docker 的支持。配置阿里云的repo源
+
+```bash
+#配置国内安装docker的阿里云的repo源
+[root@master1 ~]# yum install yum-utils -y
+[root@master1 ~]# yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+[root@master1 ~]# yum install -y device-mapper-persistent-data lvm2 wget net-tools nfs-utils lrzsz gcc gcc-c++ make cmake libxml2-devel openssl-devel curl curl-devel unzip sudo ntp libaio-devel wget vim ncurses-devel autoconf automake zlib-devel  python-devel epel-release openssh-server socat  ipvsadm conntrack telnet ipvsadm *rsync*
+[root@master1 ~]# yum -y install docker-ce
+[root@master1 ~]# systemctl start docker
+[root@master1 ~]# systemctl enable docker
+```
+
+配置docker镜像加速器，k8s所有节点均按照以下配置
+
+```shell
+vim /etc/docker/daemon.json
+写入如下内容：
+{
+"registry-mirrors":["https://vh3bm52y.mirror.aliyuncs.com","exec-opts": ["native.cgroupdriver=systemd"]  
+} 
+#这个仓库地址可以从阿里云上自己申请
+```
+
+![image-20250714161130136](D:\blogs\img\linux\image-20250714161130136.png)
+
+**重启docker：**
+
+```
+[root@master1~]# systemctl daemon-reload
+
+[root@master1~]# systemctl restart docker
+```
+
+
+
+## 二、部署kubernetes集群
+
+### 2.搭建etcd集群
+
+2.1配置etcd工作目录(三台master)
+
+```
+#创建配置文件和证书文件存放目录
+[root@master1 ~]# mkdir -p /etc/etcd
+[root@master1 ~]# mkdir -p /etc/etcd/ssl
+```
+
+2.2安装签发证书工具cfssl(master1)
+
+```shell
+[root@master1 ~]# mkdir /data/work -p
+[root@master1 ~]# cd /data/work/
+#cfssl-certinfo_linux-amd64 、cfssljson_linux-amd64 、cfssl_linux-amd64上传到/data/work/目录下
+[root@master1 work]# ls
+cfssl-certinfo_linux-amd64  cfssljson_linux-amd64  cfssl_linux-amd64
+#把文件变成可执行权限
+[root@master1 work]# chmod +x *
+[root@master1 work]# mv cfssl_linux-amd64 /usr/local/bin/cfssl
+[root@master1 work]# mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
+[root@master1 work]# mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
+```
+
+2.3配置ca证书(master1)
+
+```yaml
+#生成ca证书请求文件
+[root@master1 work]# vim ca-csr.json 
+{
+  "CN": "kubernetes",
+  "key": {
+      "algo": "rsa",
+      "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "Hubei",
+      "L": "Wuhan",
+      "O": "k8s",
+      "OU": "system"
+    }
+  ],
+  "ca": {
+          "expiry": "87600h"
+  }
+}
+```
+
+```shell
+[root@master1 work]# cfssl gencert -initca ca-csr.json  | cfssljson -bare ca
+```
+
+注：
+
+CA开头证书是：根证书与私钥
+
+CN：Common Name（公用名称），kube-apiserver 从证书中提取该字段作为请求的用户名 (User Name)；浏览器使用该字段验证网站是否合法；对于 SSL 证书，一般为网站域名；而对于代码签名证书则为申请单位名称；而对于客户端证书则为证书申请者的姓名。
+
+O：Organization（单位名称），kube-apiserver 从证书中提取该字段作为请求用户所属的组 (Group)；对于 SSL 证书，一般为网站域名；而对于代码签名证书则为申请单位名称；而对于客户端单位证书则为证书申请者所在单位名称。
+
+L 字段：所在城市
+
+S 字段：所在省份
+
+C 字段：只能是国家字母缩写，如中国：CN
+
+```shell
+#生成ca证书文件
+[root@master1 work]# vim ca-config.json 
+{
+  "signing": {
+      "default": {
+          "expiry": "87600h"
+        },
+      "profiles": {
+          "kubernetes": {
+              "usages": [
+                  "signing",
+                  "key encipherment",
+                  "server auth",
+                  "client auth"
+              ],
+              "expiry": "87600h"
+          }
+      }
+  }
+}
+```
+
+
+
