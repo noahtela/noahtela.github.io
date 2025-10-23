@@ -189,14 +189,226 @@ final int n = 5;
 
     `toUpperCase()`把字符串中的字符全部改为大写
 
-- 循环
-
-  - for
-  - while
-  - do - while
-  - 循环嵌套
-
 ## 第二周
 
+### 循环
+
+- for
+
+  ```java
+  for(表达式1;表达式2;表达式3)
+  {
+  	语句;
+  }
+  ```
+
+- while
+
+  ```java
+  while(循环条件)
+  {
+  	语句;
+  }
+  ```
+
+- do - while
+
+  ```java
+  do{
+  	语句
+  }while(循环条件);//与上一个不同，这个循环至少执行一次，注意最后的分号不要丢
+  ```
+
+- 循环嵌套
+
+### debug基础
+
+- 设置断点
+- 调试模式
+
+### 一维数组
+
+- 数组的声明
+
+  ```
+  数据类型[] 数组名;
+  数据类型 数组名[];
+  ```
+
+- 数组创建
+
+  - 先声明后创建
+
+  ```java
+  数据类型[] 数组名;
+  数组名 = new 数据类型[数组长度];
+  ```
+
+  注意：数组长度必须指定
+
+- 数组在内存中的存储
+
+  连续的 默认值为0或null
+
+- 数组的初始化
+
+  例：
+
+  ```
+  int[] arr ={1,2,3,4,5,6,7,8};
+  ```
+
+- 元素的引用
+
+  数组名[下标];
+
+### foreach循环
+
+例:
+
+```java
+int[] arr = {1,2,3,4,5};
+for(int n:arr)
+	sout(n);
+```
 
 
+
+### 冒泡排序
+
+从小到大
+
+```java
+public class ForDemo {
+        public static void main(String[] args) {
+            int[] arr = {34,53,12,56,32,17};
+            for (int i = 0; i < arr.length-1; i++) {
+                int temp;
+                for (int j = 0; j < arr.length-1-i; j++) {
+                    if (arr[j] > arr[j+1]) {
+                        temp = arr[j];
+                        arr[j] = arr[j+1];
+                        arr[j+1] = temp;
+                    }
+                }
+            }
+            for (int i = 0; i < arr.length; i++) {
+                System.out.println(arr[i]);
+            }
+        }
+
+}
+```
+
+
+
+
+
+### 二维数组
+
+多个一维数组，列可不一样
+
+
+
+### 方法
+
+什么是方法? 功能模块
+
+- 方法的声明
+
+  ```
+  访问修饰符 返回类型 方法名(参数列表){
+  	方法体
+  }
+  ```
+
+  - 无参无返回值方法
+
+    ```java
+    public class ForDemo {
+            public static void main(String[] args) {
+                ForDemo fd = new ForDemo();
+                fd.test();
+            }
+            void test(){
+                System.out.println("***********");
+                System.out.println("java");
+                System.out.println("***********");
+            }
+    }
+    ```
+
+  - 无参带返回值方法
+
+  - 带参无返回值方法
+
+  - 带参带返回值方法
+
+- 方法的重载(方法参数的灵活性)
+
+  写在同一个类中，方法名**必须相同**，参数列表**必须不同**
+
+  注意:仅返回类型不同不算重载,可以有不同的访问修饰符
+
+```java
+class Calculator {
+    // 方法重载
+    public int add(int a, int b) {
+        return a + b;
+    }
+    
+    public double add(double a, double b) {
+        return a + b;
+    }
+    
+    public int add(int a, int b, int c) {
+        return a + b + c;
+    }
+}
+```
+
+- 方法的传值
+
+  普通数据类型+String，传入方法后，主方法中原参数不变，而数组类型会变
+
+  String和数组都是引用类型数据，为什么效果不一样呢？
+
+  ```
+  根本原因：
+  String的不可变性 数组的可变性,String在方法中表现类似"值传递"，而数组表现真正的"引用传递"行为
+  ```
+
+- 可变参数列表
+
+  ```
+  public void sum(int... n){}
+  ```
+
+  - 可变参数必须是最后一个
+  - 一个方法只能有一个可变参数
+  - 可变参数本质是数组
+  - 优先匹配固定参数方法
+
+  ```java
+  public class VarargsDemo {
+      
+      // 可变参数方法
+      public static void printNumbers(int... numbers) {
+          for (int num : numbers) {
+              System.out.print(num + " ");
+          }
+          System.out.println();
+      }
+      
+      public static void main(String[] args) {
+          printNumbers();           // 输出: (空行)
+          printNumbers(1);          // 输出: 1
+          printNumbers(1, 2);       // 输出: 1 2
+          printNumbers(1, 2, 3, 4); // 输出: 1 2 3 4
+      }
+  }
+  ```
+
+  
+
+## 第三周
