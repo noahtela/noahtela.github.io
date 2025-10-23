@@ -135,7 +135,9 @@ tags:
 
 # 2 Docker安装与启动
 
-## 2.1 安装Docker 
+## 2.1安装Docker 
+
+## 2.1.1 yum方式
 
 ​	Docker官方建议在Ubuntu中安装，因为Docker是基于Ubuntu发布的，而且一般Docker出现的问题Ubuntu是最先更新或者打补丁的。在很多版本的CentOS中是不支持更新最新的一些补丁包的。
 
@@ -172,6 +174,115 @@ yum install docker-ce
 ```
 docker -v
 ```
+
+
+
+## 2.1.2 二进制安装
+
+下载二进制包:`https://download.docker.com/linux/static/stable/x86_64/`
+
+### 1）上传解压
+
+```
+tar zxvf docker-20.10.7.tgz
+mv docker/* /usr/bin
+```
+
+### 2）systemd管理docker
+
+```shell
+cat > /usr/lib/systemd/system/docker.service << EOF
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target firewalld.service
+Wants=network-online.target
+Requires=docker.socket 
+[Service]
+Type=notify
+ExecStart=/usr/bin/dockerd
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+StartLimitBurst=3
+StartLimitInterval=60s
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+```shell
+cat > /usr/lib/systemd/system/docker.socket << EOF
+[Unit]
+Description=Docker Socket for the API
+[Socket]
+ListenStream=/var/run/docker.sock
+SocketMode=0660
+SocketUser=root
+SocketGroup=docker
+[Install]
+WantedBy=sockets.target
+EOF
+```
+
+```shell
+groupadd  docker 
+#添加docker组，二进制不会自动添加的，yum会
+usermod -a -G docker user1
+#把要管理的用户添加到组里面就行
+```
+
+```shell
+mkdir /etc/docker
+cat > /etc/docker/daemon.json << EOF
+{
+    "bip":"10.10.10.1/24"
+ 
+}
+EOF
+```
+
+### 3）更改存储路径
+
+docker的默认路径是/var/lib/docker
+
+但是有时间这个空间很小，我们需要把目录迁移到足够大的磁盘下
+
+```shell
+#如果已有数据
+systemctl stop docker
+mkdir /data/service/docker -p
+mv /var/lib/docker/* /data/service/docker/
+#迁移数据
+vim /usr/lib/systemd/system/docker.service
+ExecStart=/usr/bin/dockerd  --graph /data/service/docker
+```
+
+```shell
+#无数据
+mkdir /data/service/docker -p
+ 
+vim /usr/lib/systemd/system/docker.service
+ExecStart=/usr/bin/dockerd  --graph /data/service/docker
+```
+
+### 4）开机自启
+
+```shell
+systemctl daemon-reload
+systemctl start docker
+systemctl enable docker
+```
+
+
 
 ## 2.2 设置ustc的镜像 
 
