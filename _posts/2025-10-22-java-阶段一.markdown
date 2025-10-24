@@ -412,3 +412,181 @@ class Calculator {
   
 
 ## 第三周
+
+### 类和对象
+
+- 什么是面向对象? 关注事物信息
+
+- 类 确定对象的特征+方法
+
+- 对象是类的实例表现
+
+  类---->实例化对象----->完成具体的程序
+
+- 创建类与实例化对象
+
+  ```java
+  public class Person {
+      // 属性（字段）
+      String name;
+      int age;
+      
+      // 方法
+      public void introduce() {
+          System.out.println("你好，我叫" + name + "，今年" + age + "岁。");
+      }
+      
+      public void celebrateBirthday() {
+          age++;
+          System.out.println(name + "过生日啦！现在" + age + "岁了。");
+      }
+  }
+  
+  public class PersonTest {
+      public static void main(String[] args) {
+          // 实例化对象 - 使用 new 关键字
+          Person person1 = new Person();
+          
+          // 设置对象的属性
+          person1.name = "张三";
+          person1.age = 25;
+          
+          // 调用对象的方法
+          person1.introduce();
+          person1.celebrateBirthday();
+          
+          // 创建另一个对象
+          Person person2 = new Person();
+          person2.name = "李四";
+          person2.age = 30;
+          person2.introduce();
+      }
+  }
+  ```
+
+  对象实例化后，对象的属性会有默认值(与方法不同)
+
+- 单一职责原则
+
+  一个类只有一个功能，只干一件事，功能越多，耦合越大，复用的可能性越低
+
+  `PersonTest`如何找到的`Person`? 找本类，后找同一包
+
+- new
+
+  - 声明对象 `Person person1` 仅仅是栈中开辟空间，还不能真正使用
+  - 实例化对象 `new Person();`堆中存数据，实例化后，栈中对象指向堆中的数据地址
+  - 同一作用范围内，不能定义同名对象
+
+### 堆与栈
+
+- 当存储内容是由基本数据类型(byte、short、int、long、fioat、double、char、bolean)声明的局部变量时，在栈中存储的是它们对应的具体数值。
+- 当存储的是局部的对象的引用(定义在方法体中的引用类型的变量)，存储的是具体对象在堆中的地址。当然，如果对象的引用没有指向具体的空间，则是null。
+
+### 构造方法
+
+- 构造方法与类同名且没有返回值
+
+- 构造方法的语法格式
+
+  ```java
+  public 构造方法名(){
+  	//初始化代码
+  }
+  ```
+
+- 只有在对象实例化的时候被调用
+
+- 当没有指定构造方法时，系统会自动添加无参的构造方法
+
+- 当有指定构造方法，无论是有参、无参的构造方法，都不会自动添加无参的构造方法
+
+- 一个类中可以有多个构造方法(重载)
+
+### 封装
+
+- 将类的某些信息隐藏在类内部，不允许外部程序直接访问
+- 通过该类提供的方法来实现对隐藏信息的操作和访问
+- 隐藏对象的信息
+- 留出访问的接口
+
+### 封装的代码实现
+
+- 修改属性的可见性(private)，限定只能在当前类内访问 
+- 创建getter/setter方法(public)
+- 在getter/setter方法中加入属性控制语句
+
+```java
+public class Student {
+    // 私有属性 - 外部无法直接访问
+    private String name;
+    private int age;
+    private double gpa;
+   
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+            this.name = name;
+    }
+    
+    public int getAge() {
+        return age;
+    }
+    
+    public void setAge(int age) {
+        if (age >= 0 && age <= 120) {
+            this.age = age;
+        } else {
+            System.out.println("年龄必须在0-120之间！");
+        }
+    }
+    
+    public double getGpa() {
+        return gpa;
+    }
+    
+    public void setGpa(double gpa) {
+            this.gpa = gpa;
+    }
+}
+//测试类
+public class StudentTest {
+    public static void main(String[] args) {
+        // 创建学生对象
+        Student student = new Student();
+        // 使用setter方法修改属性
+        student.setAge(21);
+        student.setGpa(3.9);
+        student.setName("李四");
+        // 调用getter方法
+        System.out.println("学生1 - 姓名: " + student.getName() + 
+                          ", 年龄: " + student.getAge() + 
+                          ", GPA: " + student.getGpa());
+    }
+}
+```
+
+
+
+### 包
+
+- Java中一个包里不能存在同名类
+- 命名：域名倒序+模块+功能
+- 导包用import
+- 加载类的顺序跟import导入语句的位置无关,先找直接能解析的类
+- `import 包名.*;` 只能访问指定包名下的类，无法访问子包下的类
+
+### static关键字
+
+- 表示静态信息，静态成员/类成员/全局属性
+- 类对象共享
+- 类加载时产生，销毁时释放，生命周期长
+- 静态成员访问方式
+  - 对象.成员
+  - 类.成员
+- 通过该类实例化的所有对象都共享类中静态资源，任一对象中信息的修订都将影响所有对象。
+- 静态方法中不能直接调用同一类中的非静态成员，只能通过对象实例化
+- 构造代码块--创建对象时调用，优先于构造方法执行(与构造方法同级)，每次实例化的时候都会执行
+- 静态代码块--创建对象时调用，优先于构造代码块执行，多个按顺序执行，无论实例化多少对象，只执行一次，只能访问静态成员
