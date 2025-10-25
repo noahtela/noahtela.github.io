@@ -344,9 +344,9 @@ public class ForDemo {
 
   - 带参带返回值方法
 
-- 方法的重载(方法参数的灵活性)
+  - 方法的重载(方法参数的灵活性)
 
-  写在同一个类中，方法名**必须相同**，参数列表**必须不同**
+  写在**同一个类**中，方法名**必须相同**，参数列表**必须不同**
 
   注意:仅返回类型不同不算重载,可以有不同的访问修饰符
 
@@ -373,9 +373,31 @@ class Calculator {
 
   String和数组都是引用类型数据，为什么效果不一样呢？
 
-  ```
+  ```java
   根本原因：
   String的不可变性 数组的可变性,String在方法中表现类似"值传递"，而数组表现真正的"引用传递"行为
+  例:
+  public class ParameterPassing {
+      public static void main(String[] args) {
+          // String示例
+          String str = "hello";
+          modifyString(str);
+          System.out.println("修改后String: " + str); // 输出: hello
+          
+          // 数组示例  
+          int[] arr = {1, 2, 3};
+          modifyArray(arr);
+          System.out.println("修改后数组: " + Arrays.toString(arr)); // 输出: [100, 2, 3]
+      }
+      
+      public static void modifyString(String s) {
+          s = "world"; // 创建了新对象，不影响原引用
+      }
+      
+      public static void modifyArray(int[] array) {
+          array[0] = 100; // 修改了原数组对象的内容
+      }
+  }
   ```
 
 - 可变参数列表
@@ -485,7 +507,7 @@ class Calculator {
 
 ### 构造方法
 
-- 构造方法与类同名且没有返回值
+- 构造方法与类同名且**没有返回值**
 
 - 构造方法的语法格式
 
@@ -590,3 +612,248 @@ public class StudentTest {
 - 静态方法中不能直接调用同一类中的非静态成员，只能通过对象实例化
 - 构造代码块--创建对象时调用，优先于构造方法执行(与构造方法同级)，每次实例化的时候都会执行
 - 静态代码块--创建对象时调用，优先于构造代码块执行，多个按顺序执行，无论实例化多少对象，只执行一次，只能访问静态成员
+
+### 继承
+
+- 利用代码复用，缩短开发周期
+- 一种类与类之间的关系
+- 使用已存在的类的定义作为基础建设新类
+- 子类的定义可以增加新的数据或功能，也可以使用父类的功能，但不能选择性的继承父类
+
+### 继承的实现
+
+- 简单演示
+
+```java
+//父类
+class Animal{
+	//公共的属性和方法
+}
+
+//子类
+class Dog extends Animal{
+    //子类特有的属性和方法
+}
+class Cat extends Animal{
+}
+
+```
+
+- 一个子类只能有唯一父类
+
+### 方法的重写
+
+- 在子类中定义
+- 方法名、参数(类型、顺序、个数)都要和父类相同，参数名不做要求
+- 当子类重写父类方法后，子类对象调用的是重写后的方法
+- 当方法返回值是void或基本数据类型时，不允许修改；当返回值是引用类型时，可以是父类或其子类
+- 访问修饰符需要大于等于父类的访问修饰符
+- 静态方法不能重写
+
+### 访问修饰符
+
+- 公有(public)：允许在任意位置访问
+- 私有(private)：只允许在本类中进行访问
+- 受保护的(protected)：允许在同类、同包子类/非子类、跨包子类调用
+- 默认(啥也不写)：允许在当前类、同包子类/非子类调用，不允许跨包
+
+### super关键字
+
+在子类中，如果一个方法重写后，子类中另一个方法仍然想调用继承下来的同名方法，可以使用`super.方法名`
+
+### 继承后的初始化顺序
+
+父类静态成员--->子类静态成员-->父类对象构造-->子类对象构造
+
+**子类构造默认调用父类无参构造方法，可以用super指定调用父类的哪个构造方法**
+
+```java
+// 父类
+class Parent {
+    private String name;
+    private int age;
+    
+    // 父类无参构造方法
+    public Parent() {
+        this.name = "未知";
+        this.age = 0;
+        System.out.println("调用了父类无参构造方法");
+    }
+    
+    // 父类有参构造方法
+    public Parent(String name, int age) {
+        this.name = name;
+        this.age = age;
+        System.out.println("调用了父类有参构造方法：name=" + name + ", age=" + age);
+    }
+}
+
+// 子类
+class Child extends Parent {
+    private String hobby;
+    
+    // 子类构造方法1：默认调用父类无参构造方法（隐式调用）
+    public Child(String hobby) {
+        // 这里隐式调用了 super()，即父类的无参构造方法
+        this.hobby = hobby;
+        System.out.println("调用了子类构造方法1，hobby=" + hobby);
+    }
+    
+    // 子类构造方法2：使用super显式调用父类有参构造方法
+    public Child(String name, int age, String hobby) {
+        super(name, age); // 显式调用父类有参构造方法，必须放在第一行
+        this.hobby = hobby;
+        System.out.println("调用了子类构造方法2，hobby=" + hobby);
+    }
+}
+```
+
+## 第四周
+
+### Object类
+
+- object类是所有类的父类
+
+- 一个类没有使用extends关键字明确标识继承关系，则默认继承Object类(包括数组)
+
+- Java中的每个类都可以使用Object中定义的方法
+
+- 继承object中的equals方法时，比较的是两个引用是否指向同一个对象
+
+- 子类可以通过重写equals方法的形式，改变比较的内容
+
+- 字符串重写了equals方法，比较的是内容
+
+- 输出对象名时，默认会直接调用类中的toString方法，object类中的toString方法是打印包名@内存地址哈希，在实体类中经常被重写
+
+  > 问:`==`到底比较的是值还是地址呢?
+  >
+  > 答：比较的是变量中存储的值，对于基本数据类型，比较栈中的实际数值，引用数据类型 - 比较栈中存储的引用地址
+
+### final关键字
+
+- final class表示该类没有子类，禁止继承
+- final 方法表示该方法不能被子类重写，但是不影响子类继承使用(不能修饰构造方法)，禁止重写
+- final 局部变量 表示该变量只能被赋值一次，变为常量
+- final 对象属性亦如此，但是有三种赋值方式：1、定义时赋值 2、构造方法中赋值3、构造代码块中赋值
+- 可配合static使用，表示全局加载一次且不能被修改
+
+### 注解
+
+- 可以声明在包、类、属性、方法、局部变量、方法参数等的前面，用来对这些元素进行说明、注释
+- 按照运行机制分为三类
+  - 源码注解:注解只在源码阶段保留在编译阶段会被丢弃
+  - 编译时注解
+  - 运行时注解：在运行阶段还起作用，甚至会影响运行逻辑的注解。
+- 按照来源分
+  - 来自JDK的注解
+  - 来自第三方的注解
+  - 我们自己定义的注解
+
+### Java单例模式
+
+- 什么是设计模式？设计模式是软件开发人员在软件开发过程中面临的一般问题的解决方案。
+- 目的:使得类的一个对象成为该类系统中的唯一实例
+- 一个类有且只有一个实例，并且自行实例化向整个系统提供
+- 实现：
+  1. 只提供私有的构造方法
+  2. 含有一个该类的静态私有对象
+  3. 提供一个静态的共有方法用于创建、获取静态私有对象
+- 优：
+  - 在内存中只有一个对象，节省内存空间
+  - 避免频繁的创建销毁对象，提高性能
+  - 避免对共享资源的多重占用
+- 缺：
+  - 扩展困难
+  - 如果实例化后的对象长期不利用，系统将默认为垃圾进行回收，造成对象状态丢失
+
+### 饿汉式单例模式
+
+- 对象创建过程中实例化
+- 空间换时间
+
+代码实现演示:
+
+```java
+package com.qy.singleton;
+
+public class SingletonOne {
+    //创建私有构造方法
+    private SingletonOne() {
+    }
+    //私有静态实例化对象
+    private  static SingletonOne singletonOne = new SingletonOne();
+
+    //共有静态方法返回静态实例对象
+    public static SingletonOne getSingleton(){
+        return singletonOne;
+    }
+
+}
+
+package com.qy.test;
+
+import com.qy.singleton.SingletonOne;
+
+public class SingletTest {
+    public static void main(String[] args) {
+        //使用类.方法调用
+        SingletonOne one = SingletonOne.getSingleton();
+        SingletonOne two = SingletonOne.getSingleton();
+
+        System.out.println(one);
+        System.out.println(two);
+
+    }
+}
+
+```
+
+![image-20251025185442620](\img\linux\image-20251025185442620.png)
+
+### 懒汉式单例模式
+
+- 静态公有方法中实例化
+- 类内实例对象创建时并不直接初始化，直到第一次调用get方法时，才完成初始化操作
+- 时间换空间
+- 存在线程风险
+  - 同步锁
+  - 双重校验锁
+  - 静态内部类
+  - 枚举
+
+代码实现:
+
+```java
+package com.qy.singleton;
+public class SingletonTwo {
+    //创建私有构造方法
+    private SingletonTwo() {
+    }
+    //私有静态实例化对象
+    private  static SingletonTwo singletonTwo;
+
+    //共有静态方法返回静态实例对象
+    public static SingletonTwo getSingleton(){
+        if(singletonTwo == null){  //如果不加判断，就违背了单例模式的初衷，重复创建和销毁对象
+            singletonTwo = new SingletonTwo();
+        }
+        return singletonTwo;
+    }
+}
+
+package com.qy.test;
+import com.qy.singleton.SingletonTwo;
+
+public class SingletTest {
+    public static void main(String[] args) {
+        //使用类.方法调用
+        SingletonTwo singletonOne = SingletonTwo.getSingleton();
+        SingletonTwo singletonTwo = SingletonTwo.getSingleton();
+        System.out.println(singletonOne);
+        System.out.println(singletonTwo);
+
+    }
+}
+```
+
