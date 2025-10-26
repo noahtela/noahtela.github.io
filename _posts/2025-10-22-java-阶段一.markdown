@@ -814,12 +814,39 @@ public class SingletTest {
 ### 懒汉式单例模式
 
 - 静态公有方法中实例化
+
 - 类内实例对象创建时并不直接初始化，直到第一次调用get方法时，才完成初始化操作
+
 - 时间换空间
+
 - 存在线程风险
   - 同步锁
+  
   - 双重校验锁
+  
+    ```java
+    public class DoubleCheckedLockingSingleton {
+        // 使用volatile确保多线程环境下的可见性和有序性
+        private static volatile DoubleCheckedLockingSingleton instance;
+        
+        private DoubleCheckedLockingSingleton() {
+            // 私有构造函数
+        }
+        public static DoubleCheckedLockingSingleton getInstance() {
+            if (instance == null) { // 第一次检查
+                synchronized (DoubleCheckedLockingSingleton.class) {
+                    if (instance == null) { // 第二次检查
+                        instance = new DoubleCheckedLockingSingleton();
+                    }
+                }
+            }
+            return instance;
+        }
+    }
+    ```
+  
   - 静态内部类
+  
   - 枚举
 
 代码实现:
@@ -856,4 +883,493 @@ public class SingletTest {
     }
 }
 ```
+
+
+
+### 多态
+
+> 问：你怎么理解多态的?
+>
+> 答：说到多态，就不得不提到方法的重写和重载，重写和重载就是多态的具体体现，简单来说，多态就是一个方法名，多种实现，首先从重写的方面，比如说我有一个父类，定义了Hello方法，打印hello1，子类里我重写了这个方法，打印hello2，同时实例化子类和父类，调用Hello方法，打印的是不同内容，这就是多态的表现。
+
+封装和继承--为多态而生
+
+- 同一个方法调用，作用于不同对象时，会产生不同的行为。
+- 一个方法名，多种实现。
+- 编译时多态
+- 运行时多态
+- 必要条件：
+  - 满足继承关系
+  - 父类引用指向子类对象
+
+演示代码
+
+```java
+package com.qy.polymorphic;
+
+public class Animal {
+
+    private String name;
+    private int age;
+
+    public Animal() {
+    }
+
+    public Animal(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public void eat() {
+        System.out.println("动物都要吃东西");
+    }
+
+}
+```
+
+```java
+package com.qy.polymorphic;
+
+public class Cat extends Animal {
+
+    private String sex;
+
+    public Cat() {
+    }
+
+    public Cat(String name, int age, String sex) {
+        super(name, age);
+        this.sex = sex;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    @Override
+    public void eat() {
+        System.out.println("猫吃鱼");
+    }
+}
+
+```
+
+```java
+package com.qy.polymorphic;
+
+public class Dog extends Animal{
+    private int weight;
+
+    public Dog() {
+    }
+
+    public Dog(String name, int age, int weight) {
+        super(name, age);
+        this.weight = weight;
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    @Override
+    public void eat() {
+        System.out.println("狗吃肉");
+    }
+}
+
+```
+
+```java
+package com.qy.test;
+
+import com.qy.polymorphic.Animal;
+import com.qy.polymorphic.Cat;
+import com.qy.polymorphic.Dog;
+
+public class PolymorphicTest {
+
+    public static void main(String[] args) {
+        Animal animal = new Animal();
+        //向上转型
+        Animal animal2 = new Cat();
+        Animal animal3 = new Dog();
+        animal.eat();
+        animal2.eat();
+        animal3.eat();
+        //向下转型
+        Cat cat = (Cat) animal2;
+        cat.eat();
+        cat.run();
+        //报错
+        Cat cat1 = (Cat) animal;
+        cat1.eat();
+        cat1.run();
+        //报错
+        Cat cat2 = (Cat) animal3;
+        cat2.eat();
+        cat2.run();
+    }
+}
+
+```
+
+输出结果：
+
+![image-20251026112031951](\img\linux\image-20251026112031951.png)
+
+
+
+### 向上转型
+
+- 隐式转型/自动转型
+
+- 父类引用指向子类实例
+
+  ```java
+  Animal animal2 = new Cat();
+  ```
+
+- 小类转为大类
+
+- 可以调用子类重写父类的方法以及父类派生的方法，无法调用子类独有方法
+
+- 目的：实现多态、编写通用代码、方法参数通用化
+
+### 向下转型
+
+- 子类引用指向父类对象，此处必须进行强转，可以调用子类特有的方法
+- 必须存在继承关系。只能将父类引用转为它真正的、具体的子类类型。
+- 目的：恢复对子类特有方法和字段的访问权限
+
+```java
+if (父类引用 instanceof 子类类型) {
+    // 安全地进行转换
+    子类类型 变量 = (子类类型) 父类引用;
+}
+```
+
+### instanceof运算符
+
+- 返回布尔值
+
+- 检查一个对象是否是指定类型（类、子类或接口）的实例
+
+  ```
+  对象引用 instanceof 类型（类或接口）
+  ```
+
+### abstract 
+
+- 这个关键词修饰的类，叫抽象类，抽象方法同理
+
+### 抽象类
+
+- 不允许实例化，但是可以通过向上转型，指向子类实例
+- 适用：某个父类只是知道其子类应该包含怎样的方法，但无法准确知道这些子类如何实现这些方法。
+- static、final、private不能与abstract共存
+
+### 抽象方法
+
+abstract修饰的方法叫做抽象方法
+
+- 抽象方法不允许包含方法体
+- 子类中需要重写父类的抽象方法
+- 包含抽象方法的类必须是抽象类
+- 抽象类中可以没有抽象方法
+
+
+
+### 接口
+
+- 接口定义了某一批类所需要遵守的规范
+
+- 接口不关心这些类的内部数据，也不关心这些类里方法的实现细节，它只规定这些类里必须提供某些方法。
+
+- 命名习惯，在类的命名规则基础上，加个I
+
+- 访问修饰符默认或public
+
+- 接口中抽象方法可以不写`abstract`关键字
+
+- 当类实现接口时，需要去实现接口中的所有抽象方法，否则需要将该类设置成抽象类
+
+- 接口中可以包含常量，默认`public static final`
+
+- 接口中的一般方法，不能有方法体，实现类必须重写这些方法，例外:默认方法，可以有方法体，实现类里也可以不用重写该方法，如`connectiond()`
+
+- 在多接口的实现类里面，如果接口里有同名的默认方法，则在业务中调用的时候会报错(不知道调哪个)，解决方案:在实现类里重写该方法
+
+  ```java
+  //接口访问修饰符:public或默认
+  public interface INet {
+      /*接口中抽象方法可以不写abstract关键字
+      *访问修饰符默认public
+      *当类实现接口时，需要去实现接口中的所有抽象方法，否则需要将该类设置为抽象类
+      */
+      //实现类必须重写
+      void network();
+  	//接口中可以包含常量，默认public static finalint TEMP-20;
+      int TEMP=20;
+      //默认方法,实现类可以重写，也可以不重写，可以通过接口的引用调用
+      default void connectiond(){
+          System.out.println("我是默认方法");
+      };
+      //静态方法,实现类不可重写，可以用接口名调用
+      static void stop(){
+          System.out.println("我是默认方法");
+      }
+  }
+  ```
+
+  
+
+- 一个类可以既继承`extends`又实现接口`implements`，但是继承必须写在接口前，如果父类和接口中的默认方法有同名方法，接口中的默认方法不生效
+
+  ```java
+  public class 类名 extends 父类 implements 接口1,接口2...
+  ```
+
+- 实现接口需要使用implements
+
+- 接口类也可以实现继承，且可以继承多个父接口
+
+- 当多个接口或父类有同名常量时，与方法不同，实现类中无法识别同名常量是哪个，可以用以下方式区分
+
+  ```java
+  interface InterfaceA {
+      int VALUE = 10;
+  }
+  
+  interface InterfaceB {
+      int VALUE = 20;
+  }
+  
+  class Parent {
+      public static final int VALUE = 30;
+  }
+  
+  // 常量冲突 - 必须明确指定来源
+  class ConflictClass extends Parent implements InterfaceA, InterfaceB {
+      public void showValues() {
+          System.out.println("父类VALUE: " + Parent.VALUE);
+          System.out.println("接口A VALUE: " + InterfaceA.VALUE);
+          System.out.println("接口B VALUE: " + InterfaceB.VALUE);
+          
+          // 直接使用VALUE会有歧义，编译错误
+          // System.out.println("VALUE: " + VALUE); // 编译错误
+      }
+  }
+  ```
+
+  
+
+> 在java中，实现类实现接口和子类继承父类有什么区别？
+>
+> - **继承**：用于建立"是什么"的关系，强调代码复用和层次结构
+> - **接口**：用于建立"能做什么"的关系，强调行为契约和多态性
+> - **实际开发**：通常结合使用，用继承建立核心层次结构，用接口扩展额外能力
+> - **设计原则**：优先使用接口组合，减少深层次的继承关系，提高代码灵活性
+
+| 特性         | 继承父类             | 实现接口                        |
+| :----------- | :------------------- | :------------------------------ |
+| **关系类型** | "is-a" 关系          | "has-a" 能力                    |
+| **数量限制** | 单继承               | 多实现                          |
+| **方法实现** | 可以继承具体实现     | 必须实现所有抽象方法            |
+| **构造方法** | 可以继承             | 没有构造方法                    |
+| **字段**     | 可以继承实例变量     | 只能有常量(public static final) |
+| **设计目的** | 代码复用、层次化设计 | 定义契约、多态行为              |
+
+
+
+### 内部类
+
+- 成员内部类
+
+  - 也称普通内部类
+
+  - 内部类在外部使用时无法直接实例化，需要借由外部类信息才能完成实例化
+
+  - 内部类可以直接访问外部类的成员(属性，方法)
+
+    ```java
+    // 外部类
+    class OuterClass {
+        private String outerField = "外部类字段";
+        
+        // 成员内部类
+        class InnerClass {
+            private String innerField = "内部类字段";
+            
+            public void display() {
+                // 内部类可以访问外部类的私有成员
+                System.out.println("访问外部类字段: " + outerField);
+                System.out.println("内部类字段: " + innerField);
+            }
+        }
+        
+        // 外部类方法：创建内部类实例
+        public void createInner() {
+            InnerClass inner = new InnerClass();
+            inner.display();
+        }
+    }
+    
+    // 测试类
+    public class Test {
+        public static void main(String[] args) {
+            OuterClass outer = new OuterClass();
+            // 方式1：通过外部类实例创建内部类
+            OuterClass.InnerClass inner1 = outer.new InnerClass();
+            inner1.display();
+            
+            // 方式2：在外部类内部创建（如createInner方法中）
+            outer.createInner();
+        }
+    }
+    ```
+
+- 静态内部类
+
+  - 静态内部类中，只能直接访问外部类的静态成员，如果需要调用非静态成员，可以通过对象实例
+
+  - 实例化静态内部类对象实例时，可以不依赖于外部类对象
+
+  - 可以通过外部类,内部类.静态成员的方式，访问内部类中的静态成员
+
+    ```java
+    class OuterClass {
+        private static String staticField = "静态字段";
+        private String instanceField = "实例字段";
+        
+        // 静态内部类
+        static class StaticInnerClass {
+            public void display() {
+                // 只能访问外部类的静态成员
+                System.out.println("静态字段: " + staticField);
+                // System.out.println(instanceField); // 错误！不能访问实例成员
+            }
+        }
+    }
+    
+    // 测试
+    public class Test {
+        public static void main(String[] args) {
+            // 静态内部类实例化：不需要外部类实例
+            OuterClass.StaticInnerClass staticInner = new OuterClass.StaticInnerClass();
+            staticInner.display();
+        }
+    }
+    ```
+
+- 方法内部类
+
+  - 局部内部类
+
+  - 定义在方法内部，作用范围也在方法内
+
+  - 类中不能包含静态成员
+
+  - 和方法内部成员使用规则一样，class前面不可以添加public、private、protected、static
+
+    ```java
+    class OuterClass {
+        private String outerField = "外部字段";
+        
+        public void method() {
+            String localVar = "局部变量"; // 必须是final或等效final
+            
+            // 局部内部类
+            class LocalInnerClass {
+                public void display() {
+                    System.out.println("外部字段: " + outerField);
+                    System.out.println("局部变量: " + localVar); // JDK8+ 自动视为final
+                }
+            }
+            
+            // 在方法内部实例化
+            LocalInnerClass localInner = new LocalInnerClass();
+            localInner.display();
+        }
+    }
+    
+    // 测试
+    public class Test {
+        public static void main(String[] args) {
+            OuterClass outer = new OuterClass();
+            outer.method(); // 在method内部实例化局部内部类
+        }
+    }
+    ```
+
+- 匿名内部类
+
+  - 只用到类的一个实例
+
+  - 类在定义后马上用到
+
+  - 给类命名并不会导致代码更容易被理解
+
+    ```java
+    // 接口
+    interface Greeting {
+        void greet();
+    }
+    
+    class OuterClass {
+        public void createAnonymousClass() {
+            // 匿名内部类：实现Greeting接口
+            Greeting greeting = new Greeting() {
+                @Override
+                public void greet() {
+                    System.out.println("Hello from anonymous inner class!");
+                }
+            };
+            
+            greeting.greet();
+            
+            // 另一种写法：直接调用
+            new Greeting() {
+                @Override
+                public void greet() {
+                    System.out.println("直接创建的匿名类");
+                }
+            }.greet();
+        }
+    }
+    
+    // 测试
+    public class Test {
+        public static void main(String[] args) {
+            OuterClass outer = new OuterClass();
+            outer.createAnonymousClass();
+        }
+    }
+    ```
+
+## 第五周
 
