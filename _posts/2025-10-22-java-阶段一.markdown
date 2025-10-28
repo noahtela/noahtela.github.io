@@ -1373,3 +1373,170 @@ abstract修饰的方法叫做抽象方法
 
 ## 第五周
 
+### 异常
+
+- 什么是异常？程序错误
+- 背离我们程序本身的意图的表现
+- 异常的分类
+  - `Throwable`:异常的根类
+  - `Error`类:表示程序无法处理的错误，表示运行应用程序中较严重问题，常见：
+    - `VirtualMachineError`虚拟机错误
+    - `OutOfMemoryError`内存溢出
+    - `ThreadDeath`线程死锁
+  - `Exception`是程序本身可以处理的异常。异常处理通常指针对这种类型异常的处理。
+- 异常处理机制
+  - 抛出异常-->捕获异常
+- 对于可查异常必须捕捉、或者声明抛出
+- 允许忽略不可查的RuntimeException(含子类)和Error(含子类)
+- 捕获异常：`try`(执行可能产生异常的代码)--`catch`(捕获异常)---`finally`(无论是否发生异常代码总能执行)
+- 声明异常：`throws`声明可能要抛出的异常
+- 手动抛出异常`throw`
+
+### `try`--`catch`---`finally`
+
+- `try`块后可接零个或多个`catch`块，如果没有`catch`块则必须跟一个`finally`块。
+
+- 常见异常类型：
+
+  - `ArithmeticException`：数学运算异常，涉及到数学运算的地方可能出现失误，比如程序中出现了除以零这样的运算
+  - `NumberFormatException`:数字格式化异常，涉及到类型转换时，比如不符合转换格式的字符串被转换成数字
+  - `ArraylndexOutOfBoundsException`：数组下标越界异常，涉及到使用超出数组下标范围的下标。
+  - `NullPointerException`：空指针异常，当使用了未经初始化的对象或者是不存在的对象时。
+  - `ClassCastException`:类型转换异常，如进行向下转型时，转换对象无法完成正常转换。
+
+  ```java
+  import java.util.Scanner;
+  import java.util.InputMismatchException;
+  
+  public class TryDemoOne {
+      public static void main(String[] args) {
+          // 要求：定义两个整数，接受用户的键盘输入，输出两数之商
+          Scanner input = new Scanner(System.in);
+          System.out.println("=====运算开始=====");
+          try {
+              System.out.print("请输入第一个整数：");
+              int one = input.nextInt();
+              System.out.print("请输入第二个整数：");
+              int two = input.nextInt();
+              System.out.println("one和two的商是：" + (one / two));
+          } catch (ArithmeticException e) {
+              System.out.println("除数不允许为零");
+              e.printStackTrace();
+          } catch (InputMismatchException e) {
+              System.out.println("请输入整数");
+              e.printStackTrace();//输出异常
+          }catch(Exception e){//一般在最后一个异常父类，防止前面异常捕获不到，而且父类catch块只能写到子类后面
+              e.printStackTrace(); 
+              System.out.println("出错啦~~");
+          }
+          finally {
+              System.out.println("=====运算结束=====");
+              input.close();
+          }
+      }
+  }
+  ```
+
+- 当`try`、`catch`、`finally`中都有return的时候，`try`/`catch`中的返回会被finally中的覆盖掉
+
+- 即便在`try`、`catch`中写了`return`,finally块也会正常执行
+
+### throws
+
+- 可以通过throws声明将要抛出何种类型的异常，通过throw将产生的异常抛出
+
+- 如果一个方法可能会出现异常，但没有能力处理这种异常，可以在方法声明处用throws子句来声明抛出异常。
+
+- throws语句用在方法定义时声明该方法要抛出的异常类型
+
+- 区别于`try`、`catch`、`finally`，throws关注的是将异常传递给调用者处理，而前者是在当前方法中立即处理异常
+
+  ```
+  public void method() throws Exception1,Exception2,...,ExceptionN{
+  // 可能产生异常的代码
+  }
+  ```
+
+  ```java
+  import java.util.Scanner;
+  import java.util.InputMismatchException;
+  
+  public class TryDemoTwo {
+      
+      public static void main(String[] args) {
+          Scanner input = new Scanner(System.in);
+          System.out.println("=====运算开始=====");
+          
+          try {
+              // 调用可能抛出异常的方法
+              performCalculation(input);
+          } catch (ArithmeticException e) {
+              System.out.println("除数不允许为零");
+              e.printStackTrace();
+          } catch (InputMismatchException e) {
+              System.out.println("请输入整数");
+              e.printStackTrace();
+          } catch (Exception e) {
+              System.out.println("出错啦~~");
+              e.printStackTrace();
+          } finally {
+              System.out.println("=====运算结束=====");
+              input.close();
+          }
+      }
+      
+      // 这个方法使用throws声明可能抛出的异常
+      // 它不自己处理异常，而是让调用者来处理
+      public static void performCalculation(Scanner input) 
+              throws ArithmeticException, InputMismatchException {
+          System.out.print("请输入第一个整数：");
+          int one = input.nextInt();  // 可能抛出InputMismatchException
+          System.out.print("请输入第二个整数：");
+          int two = input.nextInt();  // 可能抛出InputMismatchException
+          System.out.println("one和two的商是：" + (one / two));  // 可能抛出ArithmeticException
+      }
+  }
+  ```
+
+  
+
+### throw
+
+- `throw`用来抛出一个异常。
+
+- 例如:throw new IOException();
+
+- throw 抛出的只能是Throwable类或者其子类的实例对象。
+
+- 处理特殊业务逻辑产生的需求
+
+- 分两种
+
+  - 通过`try...catch`语句包含`throw`---------自己抛出异常自己处理
+  - 通过throws在方法声明出抛出异常类型-------自己抛出异常由调用者处理
+
+  
+
+  
+
+### 自定义异常
+
+- 描述特定业务产生的异常类型
+- 定义一个类，继承Throwable或者它的子类
+- 自定义异常是否属于检查异常由其父类决定
+- `e.toString()`:获得异常类型和描述信息，当直接输出对象e时，默认调用e.toString()方法。
+- `e.getMessage()`:获得异常描述信息
+- `e.printStackTrace():`打印出异常产生的堆栈信息，包括种类、描述信息、出错位置等
+- 自定义异常需先经过throw抛出，才能被catch捕获，是无法自动被程序捕获并处理的。
+
+
+
+### 异常链
+
+将异常发生的原因一个传一个串起来，把底层的异常信息传给上层，这样逐层抛出。
+
+> 异常链的存在目的是什么?
+>
+> 这是异常链最主要、最重要的目的。在复杂的系统或多层架构中（如Web应用的分层架构：Controller -> Service -> DAO），底层的异常（如数据库连接失败）在向上传递时，可能会被捕获并包装成更抽象的、对当前层有意义的异常。比如没有异常链，在顶层你只能看到“业务处理失败”，但不知道是为什么失败。有异常链：在顶层你看到“业务处理失败”，但通过异常链可以追溯到“数据访问失败”，再进一步追溯到“网络连接超时”。这让你能快速定位到是数据库服务器或网络的问题。
+
+  
