@@ -1539,4 +1539,105 @@ abstract修饰的方法叫做抽象方法
 >
 > 这是异常链最主要、最重要的目的。在复杂的系统或多层架构中（如Web应用的分层架构：Controller -> Service -> DAO），底层的异常（如数据库连接失败）在向上传递时，可能会被捕获并包装成更抽象的、对当前层有意义的异常。比如没有异常链，在顶层你只能看到“业务处理失败”，但不知道是为什么失败。有异常链：在顶层你看到“业务处理失败”，但通过异常链可以追溯到“数据访问失败”，再进一步追溯到“网络连接超时”。这让你能快速定位到是数据库服务器或网络的问题。
 
+###   包装类
+
+- 包装类与基本数据类型
+
+  | 基本类型 | 对应包装类 |
+  | -------- | ---------- |
+  | byte     | Byte       |
+  | short    | Short      |
+  | int      | Integer    |
+  | long     | Long       |
+  | float    | Float      |
+  | double   | Double     |
+  | char     | Character  |
+  | boolean  | Boolean    |
+
+- 装箱
+
+  基本数据类型的值转换成对应包装类的对象
+
+- 拆箱
+
+  包装类的对象转换成基本数据类型的值
+
+  ```java
+  public class TestOne {
+      public static void main(String[] args) {
+          int t1 = 2;
+          //自动装箱
+          Integer t2 = t1;
+          //手动装箱
+          Integer t3 = new Integer(t1);
+          Integer t4 = Integer.valueOf(t1);
+          System.out.println(t2);
+          System.out.println(t3);
+          System.out.println(t4);
+          System.out.println("********");
+          //自动拆箱
+          int t5 = t3;
+          //手动拆箱
+          int t6 = t4.intValue();
+          double t7 = t4.doubleValue();
+          System.out.println(t5);
+          System.out.println(t6);
+          System.out.println(t7);
+      }
+  ```
+
+  ![image-20251029212831578](\img\linux\image-20251029212831578.png)
+
+- 基本数据类型与字符串之间的转换
+
+  ```java
+  public class TestOne {
+      public static void main(String[] args) {
+          int t1 = 2;
+          String t2 = Integer.toString(t1);
+          System.out.println(t2);
   
+          int t3 = Integer.parseInt(t2);
+          int t4 = Integer.valueOf(t2);
+  
+          double t5 = Double.valueOf(t2);
+          double t6 = Double.parseDouble(t2);
+  
+          System.out.println(t3);
+          System.out.println(t4);
+          System.out.println(t5);
+          System.out.println(t6);
+  
+      }
+  ```
+
+- 包装类如果不进行初始化，值为NULL
+
+  ```java
+  public class TestOne {
+      public static void main(String[] args) {
+          Integer one=new Integer(100);
+          Integer two=new Integer(100);
+          System.out.println("one==two的结果: "+(one==two));//false
+  
+          Integer three=100;//自动装箱
+          //Integer three=Integer.valueOf(100);
+          System.out.println("three==100的结果: "+(three==100));//true 自动拆箱
+  
+          //Integer four=100;
+          Integer four=Integer.valueOf(100);
+          System.out.println("three==four的结果: "+(three==four));//true
+  
+          Integer five=200;
+          System.out.println("five==200的结果: "+(five==200));// true
+  
+          Integer six=200;
+          System.out.println("five==six的结果: "+(five==six));// false
+  
+      }
+  
+  }
+  ```
+
+- 如上代码，在针对自动拆箱的时候，`Integer three=100;`实际执行的是`Integer three=Integer.valueOf(100);`，而`.valueOf()`中的参数小于等于127或大于等于-128时，会将对象缓存在缓存区(对象池)，下面再有`valueOf()`时，如果在这个区间内，会优先在缓存区检查有无已存在的相同对象，若有，直接引用，如无，隐式调用`new`,不过Double和Float类型没有缓存区这个概念
+
