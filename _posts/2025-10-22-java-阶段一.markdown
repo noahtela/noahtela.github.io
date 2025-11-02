@@ -1513,7 +1513,7 @@ abstract修饰的方法叫做抽象方法
 - 分两种
 
   - 通过`try...catch`语句包含`throw`---------自己抛出异常自己处理
-  - 通过throws在方法声明出抛出异常类型-------自己抛出异常由调用者处理
+  - 通过throw在方法声明出抛出异常类型-------自己抛出异常由调用者处理
 
   
 
@@ -1745,4 +1745,181 @@ abstract修饰的方法叫做抽象方法
 
 
 
+## 第六周
+
+### 常见集合与应用
+
+List集合体系及应用--讲解`ArrayList`、`LinkedList`使用方法与底层原理
+
+Set集合体系及应用--讲解`HashSet`、`LinkedHashSet`、`TreeSet`使用方法与底层原理
+
+Map映射体系及应用--讲解`HashMap`、`LinkedHashMap`、`TreeMap`使用方法与底层原理
+
+应用Collections实现集合排序--介绍`Collections.sort()`方法的使用
+
+- Java集合包含List、Set、Map，以及JDK1.5推出的Queue四种体系
+- 四种存储结构
+  - List代表有序、可重复集合
+  - Queue代表队列特性
+  - Set代表无序、不可重复集合
+  - Map代表存储映射关系的集合
+
+### List集合
+
+- List集合代表一个元素有序、可重复的集合，集合中每个元素都有其对应的顺序索引
+- List集合允许使用重复元素，通过索引访问指定位置的元素
+- List集合默认按元素的添加顺序设置元素的索引
+
+![image-20251101170935991](\img\linux\image-20251101170935991.png)
+
+- ArrayList基于数组实现的List类，是java数组的有效替代品
+
+- ArrayList会自动对容量进行扩容，多数情况下无须指定最大长度
+
+- ArrayList的数据在内存中是连续紧密存储的，基于数据访问速度快
+
+  ```java
+  public class ArrayListSample {
+      public static void main(String[] args) {
+          //实例化ArrayList
+          ArrayList<String> bookList = new ArrayList<String>();
+          //新增元素，尾部追加
+          bookList.add("三国演义");
+          bookList.add("水浒传");
+          //返回第一个元素，索引从0开始
+          String bookName1 = bookList.get(0);
+          bookList.add("三国演义");
+          System.out.println(bookName1.getClass());
+          System.out.println(bookList);
+      }
+  }
   
+  //输出结果
+  class java.lang.String
+  [三国演义, 水浒传, 三国演义]
+  ```
+  
+- `add()`可以直接传元素，也可以在指定位置添加元素`add(index,element)`，此方法可以返回一个`boolean`值，表示列表是否发生变化
+
+- `set(index,element)`表示将index处的元素改为element，此方法返回元素修改前的值
+
+- `remove()`该方法可以传元素具体内容，返回一个`boolean`值，表示列表是否发生变化；也可以直接传元素索引，返回值为被删除的值
+
+- `size()`返回列表中元素数量
+
+### LinkedList
+
+- 同时实现了List和Deque连个接口
+- LinkedList在保障有序、允许重复的前提下，也可以作为队列在队首、队尾快速追加数据 
+- `add()`用法与List相同
+- `addFirst()`从列表首部添加数据，`addLast()`从尾部添加元素
+
+### 三种集合的遍历方式
+
+- for循环遍历(for循环和增强for循环)
+
+- forEach方法遍历(基于 Lambda 表达式的遍历方式)
+
+- lterator迭代器遍历
+
+  ```java
+  public class ListLoopSample {
+      public static void main(String[] args) {
+          ArrayList<String> bookList = new ArrayList<String>();
+          //新增元素，尾部追加
+          bookList.add("三国演义");
+          bookList.add("水浒传");
+          bookList.add("三国演义");
+          System.out.println("-------------");
+          for (String i : bookList){
+              System.out.println(i);
+          }
+          System.out.println("-------------");
+          bookList.forEach(book ->{
+              System.out.println(book);
+          });
+          System.out.println("-------------");
+          Iterator<String> itr = bookList.iterator();
+          while(itr.hasNext()){
+              String book = itr.next(); //提取出下一个元素，同时将指针向后移动
+              System.out.println(book);
+          }
+      }
+  }
+  ```
+
+- 迭代器本身的使用是“一次性”的，如果需要多次使用迭代器对集合进行遍历，那么每次都需要重新获取迭代器对象。
+
+  ```java
+  public class Test {
+      public static void main(String[] args) {
+          Test test = new Test();
+          //创建一个List集合，要求其中只能添加字符串
+          List<String> list = new ArrayList<>();
+          //向集合中添加一些元素
+          list.add("hello");
+          list.add("imooc");
+          //获取存储list中所有元素的迭代器
+          Iterator<String> iterator = list.iterator();
+          //使用迭代器进行遍历
+          while (iterator.hasNext()){
+              String s = iterator.next();
+              System.out.println(s);
+          }
+          //做一条分隔线
+          System.out.println("-------------------------");
+          //再次获取迭代器（此时直接利用上面的变量，重新赋值）
+          iterator = list.iterator();
+          while (iterator.hasNext()){
+              String s = iterator.next();
+              System.out.println(s);
+          }
+          System.out.println("遍历结束");
+      }
+  }
+  ```
+
+
+
+### Set集合
+
+- Set集合代表一个元素无序、不可重复的集合
+- Set集合与List集合使用方法基本相同，只是处理行为略有不同
+- Set集合常用的实现类是:HashSet与TreeSet
+- 与List不同的是，Set中所有关于元素索引的方法都不好使了
+- `add()`返回一个`boolean`值，表示列表是否发生变化
+- `size()`返回列表中元素数量
+- 根据业务类型不同，可能会在实体类中重写hashCode()和`equals()`
+
+> Set集合如何确保数据的唯一性?
+>
+> Set集合在新增数据时先判断数据的hashCode()是否已存在，若hashCode()在set集合存在再调用equals()进行值比较，hashcode()与equals()都存在的情况下，Set集合才认为数据已存在，不予新增
+
+> 为什么要用对象的hashCode()直接用equals()判断不行吗?
+>
+> hashcode()返回的整数结果决定了set集合中的存放位置，hashcode()计算速度很快，但可能出现哈希碰撞
+> equals()则对值进行比较，处理速度相对较。
+
+
+
+### HashSet
+
+- HashSet是Set接口的典型实现，大多数时候使用Set集合时就是使用这个实现类
+- HashSet按Hash算法来决定集合元素的顺序，具有很好的查找性能
+- 当向HashSet集合中存入一个元素时，根据该对象的hashCode值决定该对象在HashSet中的存储位置
+
+### LinkedHashSet
+
+- LinkedHashSet是HashSet的子类，除HashSet的特性外，它同时使用链表维护元素的次序，可以保障按插入顺序提取数据
+- LinkedHashSet需要维护元素的插入顺序，因此性能略低于HashSet的性能
+- 迭代访问Set里的全部元素时将有很好的性能，因为它以链表来维护内部顺序
+- 根据插入时的顺序来决定数据提取时的次序，但是在内存中并不是真正的连续
+
+### TreeSet
+
+- TreeSet是SortedSet接口的实现类，TreeSet可以确保集合元素处于排序状态
+- TreeSet采用红黑树的数据结构来存储集合元素
+- TreeSet默认采用自然排序对元素升序排列，也可以实现Comparable接口自定义排序方式
+
+
+
