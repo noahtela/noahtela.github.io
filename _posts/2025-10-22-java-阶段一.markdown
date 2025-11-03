@@ -1908,6 +1908,56 @@ Map映射体系及应用--讲解`HashMap`、`LinkedHashMap`、`TreeMap`使用方
 - HashSet按Hash算法来决定集合元素的顺序，具有很好的查找性能
 - 当向HashSet集合中存入一个元素时，根据该对象的hashCode值决定该对象在HashSet中的存储位置
 
+```java
+import java.util.HashSet;
+import java.util.Iterator;
+
+public class HashSetDemo {
+    public static void main(String[] args) {
+        // 1. 实例化HashSet对象
+        HashSet<String> fruitsSet = new HashSet<>();
+        // 2. 存入值
+        fruitsSet.add("Apple");
+        fruitsSet.add("Banana");
+        fruitsSet.add("Orange");
+        fruitsSet.add("Grape");
+        fruitsSet.add("Apple"); // 重复元素，不会被添加   
+        // 添加null值（HashSet允许一个null元素）
+        fruitsSet.add(null);
+        System.out.println("HashSet中的元素: " + fruitsSet);
+        System.out.println("HashSet大小: " + fruitsSet.size()); 
+        // 3. 多种遍历方式
+        System.out.println("\n=== 方式1: 增强for循环 ===");
+        for (String fruit : fruitsSet) {
+            System.out.println("水果: " + fruit);
+        }
+        System.out.println("\n=== 方式2: 迭代器 ===");
+        Iterator<String> iterator = fruitsSet.iterator();
+        while (iterator.hasNext()) {
+            String fruit = iterator.next();
+            System.out.println("水果: " + fruit);
+            // 可以在遍历时删除元素
+            if ("Banana".equals(fruit)) {
+                iterator.remove();
+            }
+        } 
+        System.out.println("\n删除Banana后的HashSet: " + fruitsSet);
+        System.out.println("\n=== 方式3: forEach + Lambda表达式 (Java 8+) ===");
+        fruitsSet.forEach(fruit -> System.out.println("水果: " + fruit));
+        // 4. 其他常用操作
+        System.out.println("\n=== 其他操作 ===");
+        System.out.println("是否包含Apple: " + fruitsSet.contains("Apple"));
+        System.out.println("是否为空: " + fruitsSet.isEmpty());
+        // 删除元素
+        fruitsSet.remove("Orange");
+        System.out.println("删除Orange后: " + fruitsSet);
+        // 清空HashSet
+        fruitsSet.clear();
+        System.out.println("清空后HashSet大小: " + fruitsSet.size());
+    }
+}
+```
+
 ### LinkedHashSet
 
 - LinkedHashSet是HashSet的子类，除HashSet的特性外，它同时使用链表维护元素的次序，可以保障按插入顺序提取数据
@@ -1915,11 +1965,67 @@ Map映射体系及应用--讲解`HashMap`、`LinkedHashMap`、`TreeMap`使用方
 - 迭代访问Set里的全部元素时将有很好的性能，因为它以链表来维护内部顺序
 - 根据插入时的顺序来决定数据提取时的次序，但是在内存中并不是真正的连续
 
+```java
+import java.util.*;
+
+public class SetExample {
+    public static void main(String[] args) {
+        // HashSet - 不保证顺序
+        Set<String> hashSet = new HashSet<>();
+        hashSet.add("Apple");
+        hashSet.add("Banana");
+        hashSet.add("Cherry");
+        hashSet.add("Date");
+        System.out.println("HashSet顺序: " + hashSet);
+        // 输出可能是: [Apple, Cherry, Date, Banana] - 顺序不确定
+        
+        // LinkedHashSet - 保证插入顺序
+        Set<String> linkedHashSet = new LinkedHashSet<>();
+        linkedHashSet.add("Apple");
+        linkedHashSet.add("Banana");
+        linkedHashSet.add("Cherry");
+        linkedHashSet.add("Date");
+        System.out.println("LinkedHashSet顺序: " + linkedHashSet);
+        // 输出总是: [Apple, Banana, Cherry, Date] - 插入顺序
+    }
+}
+```
+
+> HashSet和LinkedHashSet的数据存储方式
+>
+> HashSet是数组中存了一个或多个冲突链表/红黑树，而LinkedHashSet又单独维护了一个双向链表，保证插入顺序，数组的每个元素是一个桶（bucket），每个桶内是一个链表或红黑树，用于存储哈希值相同的元素。LinkedHashSet在HashSet的基础上，额外维护了一个双向链表，这个链表将所有的元素按照插入顺序连接起来。因此，迭代时按照这个链表的顺序输出。
+
 ### TreeSet
 
 - TreeSet是SortedSet接口的实现类，TreeSet可以确保集合元素处于排序状态
 - TreeSet采用红黑树的数据结构来存储集合元素
 - TreeSet默认采用自然排序对元素升序排列，也可以实现Comparable接口自定义排序方式
+
+### Map接口
+
+- Map映射特点
+  - Map用于保存具有映射关系的数据，每组映射都是Key(键)与Value(值)组合而成
+  - Key和Value可以是任何引用类型数据，但是Key通常是String
+  - Map中的Key是不允许重复的，重复为同一个Key设置Value，后者Value会覆盖前者Value
+
+### HashMap
+
+- HashMap是Map接口的典型实现类，对Key进行无需存储
+- HashMap不能保证数据按存储顺序读取，且Key全局唯一
+
+> HashMap与HashSet的关系?
+>
+> Java先有Map后有Set，HashSet从HashMap精简而来，区别在于每一个HashSet的数据都只有单个数值，对数值进行Hash，然后确认存储位置，而HashMap是对Key进行Hash
+
+- `put()`：添加元素，键重复时会覆盖旧值，然后返回被覆盖的Value
+- `get(K)`：根据Key 值获取对应的Value
+- `containsKey(K)`：判断K值存不存在，返回boolean类型
+- `containsValue(V)`：判断V值存不存在
+- `remove(K)`：移除K值对应的Value
+
+> 在HashMap和HashSet中，删除元素都是用remove()，这里会不会因为哈希碰撞导致删除的元素错误?
+>
+> **简短回答：不会。** HashMap和HashSet的`remove()`方法在设计时已经考虑了哈希碰撞的情况，能够正确删除目标元素而不会误删其他元素。首先比较`hash`值（快速筛选），然后比较`key`是否相等（通过`equals()`方法精确匹配）即使哈希碰撞也能正确识别：相同哈希值的不同键会存储在同一个桶中，删除时会遍历该桶内的所有元素，用`equals()`方法精确匹配
 
 
 
