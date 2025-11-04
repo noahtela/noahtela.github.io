@@ -1814,7 +1814,7 @@ Map映射体系及应用--讲解`HashMap`、`LinkedHashMap`、`TreeMap`使用方
 - `add()`用法与List相同
 - `addFirst()`从列表首部添加数据，`addLast()`从尾部添加元素
 
-### 三种集合的遍历方式
+### 三种List集合的遍历方式
 
 - for循环遍历(for循环和增强for循环)
 
@@ -2028,4 +2028,241 @@ public class SetExample {
 > **简短回答：不会。** HashMap和HashSet的`remove()`方法在设计时已经考虑了哈希碰撞的情况，能够正确删除目标元素而不会误删其他元素。首先比较`hash`值（快速筛选），然后比较`key`是否相等（通过`equals()`方法精确匹配）即使哈希碰撞也能正确识别：相同哈希值的不同键会存储在同一个桶中，删除时会遍历该桶内的所有元素，用`equals()`方法精确匹配
 
 
+
+### TreeMap
+
+- TreeMap存储key-value对时，需要根据key对节点进行排序
+- TreeMap支持两种Key排序:自然排序与定制排序
+- 与TreeSet相同，TreeMap也是基于红黑树结构对数据进行排序
+
+### Map的遍历方式
+
+```java
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
+public class MapDemo {
+    public static void main(String[] args) {
+
+        // 实例化HashMap（使用String作为键，Object作为值以便存储多种类型）
+        Map<String, Object> dataMap = new HashMap<>();
+
+        // 添加数据
+        dataMap.put("name", "张三");
+        dataMap.put("age", 25);
+        dataMap.put("height", 175.5);
+        dataMap.put("isStudent", false);
+        dataMap.put("hobbies","篮球");
+        System.out.println(dataMap);
+        //遍历数据
+        //1
+        Set<String> dataSet = dataMap.keySet();
+        for (String key : dataSet) {
+            System.out.println(dataMap.get(key));
+        }
+
+        //2
+        dataMap.forEach((k,v) ->{
+            System.out.println(k +":"+ v);
+        });
+
+        //3 迭代器
+        Iterator<Map.Entry<String, Object>> iterator = dataMap.entrySet().iterator();
+        while (iterator.hasNext()){
+            Map.Entry<String, Object> next = iterator.next();
+            System.out.println(next.getKey()+":" + next.getValue());
+        }
+
+
+    }
+```
+
+
+
+### 通过Colections实现List排序
+
+Java中针对List排序操作,给出了`Collections`工具类
+
+```java
+import java.util.Collections;
+import java.util.List;
+
+public class CollectionsTest {
+
+    public List<Integer> sort(List<Integer> list) {
+        Collections.sort(list);
+        return list;
+    }
+
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>();
+        list.add(30);
+        list.add(50);
+        list.add(20);
+        list.add(79);
+        System.out.println(list);
+
+        CollectionsTest collectionsTest = new CollectionsTest();
+        collectionsTest.sort(list);
+        System.out.println(list);
+    }
+}
+
+//输出
+[30, 50, 20, 79]
+[20, 30, 50, 79]
+```
+
+- 值得注意的是，`collectionsTest.sort()`直接操作的就是原集合
+- 上面的代码只是能进行升序排序，若要进行降序排序，那么就要请出`Comparator`接口了
+
+```java
+import java.util.*;
+
+public class CollectionsTest {
+
+    class TestComparator implements Comparator<Integer> {
+        @Override
+        //结果>0，则交换位置
+        //结果=0或小于0，则位置不变
+        public int compare(Integer o1, Integer o2) {
+            return o2-o1;
+        }
+    }
+    public List<Integer> sort(List<Integer> list) {
+        Collections.sort(list, new TestComparator());
+        return list;
+    }
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>();
+        list.add(30);
+        list.add(50);
+        list.add(20);
+        list.add(79);
+        System.out.println(list);
+
+        CollectionsTest collectionsTest = new CollectionsTest();
+        collectionsTest.sort(list);
+        System.out.println(list);
+    }
+}
+
+```
+
+- 上述代码实现了`Comparator`接口，并在调用 `Collections.sort()`时实例化了`TestComparator`
+
+
+
+### 自定义类型如何集合排序
+
+```java
+import java.util.*;
+
+class Student {
+    private String name;
+    private int score;
+    private int age;
+    
+    public Student(String name, int score, int age) {
+        this.name = name;
+        this.score = score;
+        this.age = age;
+    }
+    
+    public String getName() { return name; }
+    public int getScore() { return score; }
+    public int getAge() { return age; }
+    
+    @Override
+    public String toString() {
+        return name + "(分数:" + score + ", 年龄:" + age + ")";
+    }
+}
+
+public class StudentSortingExample {
+    
+    // 内部类：按分数排序的比较器
+    static class ScoreComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return Integer.compare(s1.getScore(), s2.getScore());
+        }
+    }
+    
+    // 内部类：按姓名排序的比较器
+    static class NameComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return s1.getName().compareTo(s2.getName());
+        }
+    }
+    
+    // 内部类：按年龄降序排序的比较器
+    static class AgeDescComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return Integer.compare(s2.getAge(), s1.getAge()); // 降序
+        }
+    }
+    
+    // 内部类：多重排序（先按分数，再按年龄）
+    static class ScoreThenAgeComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            int scoreCompare = Integer.compare(s1.getScore(), s2.getScore());
+            if (scoreCompare != 0) {
+                return scoreCompare;
+            }
+            return Integer.compare(s1.getAge(), s2.getAge());
+        }
+    }
+
+    public static void main(String[] args) {
+        List<Student> students = new ArrayList<>();
+        students.add(new Student("王五", 85, 20));
+        students.add(new Student("张三", 92, 22));
+        students.add(new Student("李四", 85, 19));
+        students.add(new Student("赵六", 78, 21));
+        students.add(new Student("孙七", 92, 20));
+        
+        System.out.println("原始列表:");
+        students.forEach(System.out::println);
+        
+        // 使用内部类比较器进行排序
+        
+        // 1. 按分数排序
+        Collections.sort(students, new ScoreComparator());
+        System.out.println("\n按分数升序排序:");
+        students.forEach(System.out::println);
+        
+        // 2. 按姓名排序
+        Collections.sort(students, new NameComparator());
+        System.out.println("\n按姓名排序:");
+        students.forEach(System.out::println);
+        
+        // 3. 按年龄降序排序
+        Collections.sort(students, new AgeDescComparator());
+        System.out.println("\n按年龄降序排序:");
+        students.forEach(System.out::println);
+        
+        // 4. 多重排序：先按分数，再按年龄
+        Collections.sort(students, new ScoreThenAgeComparator());
+        System.out.println("\n先按分数再按年龄排序:");
+        students.forEach(System.out::println);
+        
+        // 5. 也可以使用匿名内部类（另一种形式的内部类）
+        Collections.sort(students, new Comparator<Student>() {
+            @Override
+            public int compare(Student s1, Student s2) {
+                // 按分数降序
+                return Integer.compare(s2.getScore(), s1.getScore());
+            }
+        });
+        System.out.println("\n按分数降序排序（使用匿名内部类）:");
+        students.forEach(System.out::println);
+    }
+}
+```
 
