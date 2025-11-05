@@ -2266,3 +2266,255 @@ public class StudentSortingExample {
 }
 ```
 
+### 泛型
+
+- 对输入的内容加以约束，允许在定义类、接口、方法时使用类型形参(泛型)，这个类型形参将在声明变量、创建对象、调用方法时动态地指定，进而让程序具备编译时检查能力
+- 提供了编译时纠错的能力
+
+```java
+//不使用泛型
+import java.util.ArrayList;
+import java.util.List;
+
+public class WithoutGenerics {
+    public static void main(String[] args) {
+        // 创建一个不使用泛型的ArrayList
+        List list = new ArrayList();
+        
+        // 添加各种类型的对象
+        list.add("Hello");
+        list.add("World");
+        list.add(123); // 自动装箱为Integer，但编译时不会报错
+        
+        // 遍历集合
+        for (Object obj : list) {
+            // 需要强制类型转换
+            String str = (String) obj; // 这里会抛出ClassCastException!
+            System.out.println(str.length());
+        }
+    }
+}
+
+//输出
+5
+5
+Exception in thread "main" java.lang.ClassCastException: java.lang.Integer cannot be cast to java.lang.String
+```
+
+```java
+//使用泛型
+import java.util.ArrayList;
+import java.util.List;
+
+public class WithGenerics {
+    public static void main(String[] args) {
+        // 创建一个使用泛型的ArrayList，指定只能存储String类型
+        List<String> list = new ArrayList<String>();
+        // Java 7+ 可以使用钻石运算符：List<String> list = new ArrayList<>();
+        
+        // 添加元素
+        list.add("Hello");
+        list.add("World");
+        // list.add(123); // 编译错误！无法通过编译
+        
+        // 遍历集合 - 不需要强制类型转换
+        for (String str : list) {
+            System.out.println(str.length()); // 直接调用String的方法
+        }
+    }
+}
+
+//输出
+5
+5
+```
+
+
+
+### 泛型类的创建与使用
+
+```java
+// 自定义泛型类
+class Box<T> {
+    private T content;
+    
+    public void setContent(T content) {
+        this.content = content;
+    }
+    
+    public T getContent() {
+        return content;
+    }
+}
+
+public class CustomGenericExample {
+    public static void main(String[] args) {
+        // 存储字符串的盒子
+        Box<String> stringBox = new Box<>();
+        stringBox.setContent("Hello Generics");
+        String str = stringBox.getContent(); // 不需要类型转换
+        
+        // 存储整数的盒子
+        Box<Integer> intBox = new Box<>();
+        intBox.setContent(100);
+        Integer num = intBox.getContent(); // 不需要类型转换
+        
+        // stringBox.setContent(123); // 编译错误！
+    }
+}
+```
+
+- 注意：`Box<T>`中的字母是随意的
+
+### 泛型方法
+
+- JDK 1.5以后还提供了泛型方法的支持，允许在类没有声明泛型的前提下让方法独立使用泛型进行开发
+
+```java
+package com.qy.test;
+
+public class TestOne {
+    // 泛型方法的基本语法：在返回类型前添加 <T>
+    public static <T> void printArray(T[] array) {
+        for (T element : array) {
+            System.out.print(element + " ");
+        }
+        System.out.println();
+    }
+    public static <T> int printAll(T all) {
+        int count = 0;
+        System.out.println(all.toString());
+        return count;
+    }
+    // 多个类型参数的泛型方法
+    public static <T, U> void printPair(T first, U second) {
+        System.out.println("First: " + first + " (" + first.getClass().getSimpleName() + ")");
+        System.out.println("Second: " + second + " (" + second.getClass().getSimpleName() + ")");
+    }
+    // 有返回值的泛型方法
+    public static <T> T getFirstElement(T[] array) {
+        if (array == null || array.length == 0) {
+            return null;
+        }
+        return array[0];
+    }
+    public static void main(String[] args) {
+        // 测试泛型方法
+        Integer[] intArray = {1, 2, 3, 4, 5};
+        String[] strArray = {"Hello", "World", "Java"};
+
+        System.out.println("整数数组:");
+        printArray(intArray); // 类型推断，自动识别为Integer
+
+        System.out.println("字符串数组:");
+        printArray(strArray); // 类型推断，自动识别为String
+
+        System.out.println("打印不同类型对:");
+        printPair("年龄", 25); // T=String, U=Integer
+        printPair(3.14, true); // T=Double, U=Boolean
+        System.out.println("ssssssssssssssss");
+        int i = printAll(1);
+        System.out.println(i);
+        System.out.println("ssssssssssssssss");
+        System.out.println("获取第一个元素:");
+        Integer firstInt = getFirstElement(intArray);
+        String firstStr = getFirstElement(strArray);
+        System.out.println("第一个整数: " + firstInt);
+        System.out.println("第一个字符串: " + firstStr);
+    }
+
+}
+```
+
+### 泛型通配符
+
+- 泛型对<>中的类型是精准，方法定义时是父类，调用时是子类就会报错
+- 当明确指定泛型类型后，就必须强制使用该类型传入，该类型的子类也同样会报"类型不匹配"错误
+
+```java
+//方法定义:
+public void doSth(List<Shape> shapeList)
+
+//调用时使用Shape的子类Circle就会报错
+List<Circle> circleList= new ArrayList<>;
+obj.doSth(circleList);
+```
+
+- 为了增加泛型的匹配范围,泛型通配符<?>应运而生
+
+- 单独使用<?>的话基本没啥意义，要和extends与super配合使用限定范围
+
+- extends关键字代表必须传入Shape或者子类才通过检查
+
+  ```java
+  public void doSth(List<? extends Shape> shapeList)
+  ```
+
+- super关键字代表必须传入Rectangle或者其父类才能通过检查
+
+  ```java
+  public void doSth(List<? super Rectangle> shapeList)
+  ```
+
+
+
+### 多线程
+
+> 程序、进程与线程的关系？
+>
+> 一个程序可以启动多个进程，每个进程间内存隔离，进程的资源是彼此隔离的，其他进程不允许访问
+>
+> 一个进程至少包含一个线程（主线程）
+
+- 线程是进程内的一个"**基本任务**",每个线程都有自己的功能,是CPU分配与调度的基本单位
+- 进程内至少拥有一个"线程"，这个线程叫"主线程”，主线程消亡则进程结束
+- 并发执行:单核CPU的时间片循环分给多线程;并行执行:多核CPU的时间片分别分给不同的线程
+- 每个java进程至少包含两个线程:`main`主线程和垃圾回收线程
+
+### 创建多线程的三种方式
+
+- 继承Thread类创建线程
+
+  ```java
+  package com.qy.test;
+  
+  import java.util.Random;
+  
+  public class ThreadTest {
+  
+      class Runner extends Thread{
+          public void run() {
+              Integer speed = new Random().nextInt(10);
+              for (int i = 0; i < 10; i++) {
+                  try {
+                      Thread.sleep(1000);
+                  } catch (InterruptedException e) {
+                      throw new RuntimeException(e);
+                  }
+                  System.out.println("第"+i+"秒"+this.getName()+"跑了"+(speed*i)+"米");
+              }
+          }
+      }
+  
+      public void start(String name){
+          Runner runner = new Runner();
+          runner.setName(name);
+          runner.start();
+      }
+  
+      public static void main(String[] args) {
+  
+          new ThreadTest().start("A");
+          new ThreadTest().start("B");
+          new ThreadTest().start("C");
+      }
+  
+  }
+  ```
+
+  
+
+- 实现Runnable接口创建线程
+
+- Callable接口创建线程
+
