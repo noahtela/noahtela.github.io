@@ -605,6 +605,28 @@ public class StudentTest {
 - 表示静态信息，静态成员/类成员/全局属性
 - 类对象共享
 - 类加载时产生，销毁时释放，生命周期长
+- 静态变量只能在类主体中定义，不能在方法中定义
+
+> 如下代码的输出结果是什么?
+>
+> ```java
+> public class Test {
+>     public int aMethod(){
+>         static int i = 0;
+>         i++;
+>         return i;
+>     }
+>     public static void main(String args[]){
+>         Test test = new Test();
+>         test.aMethod();
+>         int j = test.aMethod();
+>         System.out.println(j);
+>     }
+> }
+> ```
+>
+> 编译错误，静态变量只能在类主体中定义，不能在方法中定义
+
 - 静态成员访问方式
   - 对象.成员
   - 类.成员
@@ -1396,6 +1418,10 @@ abstract修饰的方法叫做抽象方法
 
 - `try`块后可接零个或多个`catch`块，如果没有`catch`块则必须跟一个`finally`块。
 
+  - 在try块中放置可能抛出异常的业务代码
+  - 在catch块中处理异常
+  - 在finally块中进行资源释放，如关闭文件、关闭数据库连接等清理工作
+
 - 常见异常类型：
 
   - `ArithmeticException`：数学运算异常，涉及到数学运算的地方可能出现失误，比如程序中出现了除以零这样的运算
@@ -1742,6 +1768,7 @@ abstract修饰的方法叫做抽象方法
   - `toString()`转换成string类型
   - `insert(int offset, String str)`，在offset处插入str
   - `replace(int start, int end, String str)`
+  - `length()`返回当前字符串序列中的字符数，`capacity()` 返回当前StringBuffer的容量。容量不会自动回收，手动回收方法`capacity()`缩减到当前长度
 
 
 
@@ -2516,5 +2543,214 @@ obj.doSth(circleList);
 
 - 实现Runnable接口创建线程
 
+  ```java
+  public class ThreadTest2 {
+  
+      class Runner implements Runnable{
+  
+          @Override
+          public void run() {
+              Integer speed = new Random().nextInt(10);
+              for (int i = 1; i < 10; i++) {
+                  try {
+                      Thread.sleep(1000);
+                  } catch (InterruptedException e) {
+                      throw new RuntimeException(e);
+                  }
+                  System.out.println("第"+i+"秒"+Thread.currentThread().getName()+"跑了"+(speed*i)+"米");
+              }
+          }
+      }
+  
+      public void start(String name){
+          Runnable r = new Runner();
+          Thread t = new Thread(r);
+          t.setName(name);
+          t.start();
+      }
+  
+      public static void main(String[] args) {
+          ThreadTest2 t = new ThreadTest2();
+          t.start("A");
+          t.start("B");
+      }
+  
+  
+  }
+  ```
+
 - Callable接口创建线程
+
+  ```java
+  import java.util.Random;
+  import java.util.concurrent.*;
+  
+  public class ThreadTest3 {
+  
+      class Runner implements Callable<Integer>{
+          public String name;
+  
+          @Override
+          public Integer call() throws Exception {
+              Integer speed = new Random().nextInt(10);
+              Integer result = 0;
+              for (int i = 1; i < 10; i++) {
+                  Thread.sleep(1000);
+                  result = speed * i;
+                  System.out.println("第"+i+"秒"+this.name+"跑了"+result+"米");
+              }
+              return result;
+          }
+      }
+      public void start() throws ExecutionException, InterruptedException {
+          ExecutorService executorService = Executors.newFixedThreadPool(3);
+          Runner r1 = new Runner();
+          r1.name = "A";
+          Runner r2 = new Runner();
+          r2.name = "B";
+          Runner r3 = new Runner();
+          r3.name = "C";
+          Future<Integer> s1 = executorService.submit(r1);
+          Future<Integer> s2 = executorService.submit(r2);
+          Future<Integer> s3 = executorService.submit(r3);
+          executorService.shutdown();
+          System.out.println(r1.name+"跑了"+s1.get()+"米");
+          System.out.println(r2.name+"跑了"+s2.get()+"米");
+          System.out.println(r3.name+"跑了"+s3.get()+"米");
+      }
+  
+      public static void main(String[] args) throws ExecutionException, InterruptedException {
+          ThreadTest3 t = new ThreadTest3();
+          t.start();
+      }
+  }
+  ```
+
+  - 注意接收返回值的方法
+
+### 线程的生命周期
+
+- NEW 新创建状态
+- RUNNABLE 可运行状态
+- BLOCKED 阻塞状态
+- WAITING 等待状态
+- TIMED_WAITING 超时等待状态
+- TERMINATED 结束状态
+
+![image-20251106214829606](\img\linux\image-20251106214829606.png)
+
+> 大致的可以总结成四个状态，刚刚创建还未运行--运行阶段--中断阶段(阻塞/等待)--死亡状态
+
+
+
+### 线程同步
+
+`synchronized`(同步锁)关键字的作用就是利用一个特定的对象设置一个锁lock(绣球)，在多线程(游客)并发访问的时候，同时只允许一个线程(游客)可以获得这个锁，执行特定的代码(迎娶新娘)。执行后释放锁，继续由其他线程争抢。synchronized关键字保证共享对象在同一时刻只能被一个线程访问。
+
+### synchronized的锁对象
+
+- synchronized代码块-任意对象即可
+
+  ```java
+  public class SyncBlockWithRunnable {
+      private final Object lock = new Object(); // 锁对象
+      private int count = 0;
+      
+      // 共享的任务类
+      class MyTask implements Runnable {
+          @Override
+          public void run() {
+              for (int i = 0; i < 3; i++) {
+                  // synchronized代码块
+                  synchronized(lock) {
+                      count++;
+                      System.out.println(Thread.currentThread().getName() + 
+                                       " - Count: " + count);
+                  }
+                  
+                  try {
+                      Thread.sleep(100); // 模拟处理时间
+                  } catch (InterruptedException e) {
+                      e.printStackTrace();
+                  }
+              }
+          }
+      }
+      
+      public static void main(String[] args) {
+          SyncBlockWithRunnable demo = new SyncBlockWithRunnable();
+          MyTask task = demo.new MyTask(); // 创建共享任务
+          
+          // 创建多个线程共享同一个任务
+          for (int i = 0; i < 5; i++) {
+              new Thread(task, "Thread-" + (i + 1)).start();
+          }
+      }
+  }
+  ```
+
+- synchronized方法-this当前对象
+
+  ```java
+  public class SyncMethodWithRunnable {
+      private int count = 0;
+      
+      // 共享的任务类
+      class MyTask implements Runnable {
+          @Override
+          public void run() {
+              for (int i = 0; i < 3; i++) {
+                  increment(); // 调用同步方法
+                  
+                  try {
+                      Thread.sleep(100); // 模拟处理时间
+                  } catch (InterruptedException e) {
+                      e.printStackTrace();
+                  }
+              }
+          }
+          
+          // synchronized方法
+          private synchronized void increment() {
+              count++;
+              System.out.println(Thread.currentThread().getName() + 
+                               " - Count: " + count);
+          }
+      }
+      
+      public static void main(String[] args) {
+          SyncMethodWithRunnable demo = new SyncMethodWithRunnable();
+          MyTask task = demo.new MyTask(); // 创建共享任务
+          
+          // 创建多个线程共享同一个任务
+          for (int i = 0; i < 5; i++) {
+              new Thread(task, "Thread-" + (i + 1)).start();
+          }
+      }
+  }
+  ```
+
+  
+
+- synchronized静态方法-该类的字节码对象
+
+> 什么是线程安全?
+>
+> 在拥有共享数据的多条线程并行执行的程序中，线程安全的代码会通过同步机制保证各个线程都可以正常且正确的执行，不会出现数据污染等意外情况
+
+
+
+### 死锁
+
+死锁是在多线程情况下最严重的问题，在多线程对公共资源(文件、数据)等进行操作时，彼此不释放自己的资源，而去试图操作其他线程的资源，而形成交叉引用，就会产生死锁
+
+解决死锁
+
+- 尽量减少公共资源的引用
+- 用完马上释放公共资源
+- 增加超时失败机制
+
+
+
+### 线程池--concurrent包
 
