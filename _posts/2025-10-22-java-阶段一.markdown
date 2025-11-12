@@ -2916,3 +2916,146 @@ Thread-1 - 0
 
 ### 线程池--concurrent包
 
+- Runnable接口的弊端
+  - Runnable新建线程，性能差
+  - 线程缺乏统一管理，可能无限制的新建线程，相互竞争，严重时会占用过多系统资源导致死机或内存溢出
+
+线程复用
+
+ThreadPool线程池
+
+- 重用存在的线程，减少线程对象创建、消亡的开销
+- 线程总数可控，提高资源的利用率
+- 提供额外功能，定时执行、定期执行、监控等、
+
+
+
+在concurrent中包中，提供了工具类Executors(调度器)对象来创建线程池，可创建的线程池有四种：
+
+- FixedThreadPool - 定长线程池
+
+  ```java
+  package com.qy.pool;
+  
+  import java.util.concurrent.Executor;
+  import java.util.concurrent.ExecutorService;
+  import java.util.concurrent.Executors;
+  
+  public class ThreadPoolTest1 {
+  
+      public static void main(String[] args) {
+          //定长线程池的特点是固定线程总数，空闲线程用于执行任务，如果线程都在使用，后续任务则处于等待状态
+          ExecutorService executorService = Executors.newFixedThreadPool(10);
+  
+          for (int i = 0; i < 1000; i++) {
+              final int index =i;
+              //不需要返回值，使用execute方法执行Runnable对象
+              executorService.execute(new Runnable() {
+                  @Override
+                  public void run() {
+                      System.out.println(Thread.currentThread().getName()+":"+index);
+                  }
+              }
+              //需要返回值，使用submit方法执行callable对象，利用Future对象接收返回值
+  
+              );
+          }
+          executorService.shutdown();
+      }
+  }
+  
+  ```
+
+  
+
+- CachedThreadPool-可缓存线程池
+
+  ```java
+  package com.qy.pool;
+  
+  import java.util.concurrent.ExecutorService;
+  import java.util.concurrent.Executors;
+  
+  public class ThreadPoolTest2 {
+      public static void main(String[] args) {
+  
+          //可缓存线程池的特点是，无限大，如果线程池中没有可用的线程则创建，有空闲线程则利用起来
+          ExecutorService executorService = Executors.newCachedThreadPool();
+  
+          for (int i = 0; i < 1000; i++) {
+              final int index =i;
+              //不需要返回值，使用execute方法执行Runnable对象
+              executorService.execute(new Runnable() {
+                                          @Override
+                                          public void run() {
+                                              System.out.println(Thread.currentThread().getName()+":"+index);
+                                          }
+                                      }
+              );
+          }
+          executorService.shutdown();
+      }
+  }
+  ```
+
+  
+
+- SingleThreadExecutor-单线程池
+
+  ```java
+  package com.qy.pool;
+  
+  import java.util.concurrent.ExecutorService;
+  import java.util.concurrent.Executors;
+  
+  public class ThreadPoolTest3 {
+      public static void main(String[] args) {
+  
+          //只能有一个线程
+          ExecutorService executorService = Executors.newSingleThreadExecutor();
+  
+          for (int i = 0; i < 1000; i++) {
+              final int index =i;
+              //不需要返回值，使用execute方法执行Runnable对象
+              executorService.execute(new Runnable() {
+                                          @Override
+                                          public void run() {
+                                              System.out.println(Thread.currentThread().getName()+":"+index);
+                                          }
+                                      }
+              );
+          }
+          executorService.shutdown();
+      }
+  }
+  ```
+
+  
+
+- ScheduledThreadPool-调度线程池
+
+  ```java
+  package com.qy.pool;
+  
+  import java.util.Date;
+  import java.util.concurrent.Executors;
+  import java.util.concurrent.ScheduledExecutorService;
+  import java.util.concurrent.TimeUnit;
+  
+  public class ThreadPoolTest4 {
+      public static void main(String[] args) {
+  
+          ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
+          scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+              @Override
+              public void run() {
+                  System.out.println(new Date() + "延迟一秒执行，每三秒执行一次");
+              }
+          },1,3, TimeUnit.SECONDS);
+  
+  
+      }
+  }
+  
+  ```
+
